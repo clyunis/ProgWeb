@@ -9,4 +9,4 @@ Para poder ejecutar este proyecto, se debe tener instalado GO.
 # Instrucciones de ejecucion
 
 Iniciar la terminal, ubicarse en la raiz del proyecto y ejecutar go run main.go.
-La pagina se podria visualizar en http://localhost:8080 una vez inicializado el servidor de GO.
+La pagina se podra visualizar en http://localhost:8080 una vez inicializado el servidor de GO.
