@@ -1,0 +1,68 @@
+CREATE TABLE USERS (
+    id_usuario SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    apellido VARCHAR(100) NOT NULL,
+    dni VARCHAR(9) NOT NULL UNIQUE,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    telefono VARCHAR(20) NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    fecha_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE PUBLICACION (
+    id_alquiler SERIAL PRIMARY KEY,
+    titulo VARCHAR(200) NOT NULL,
+    descripcion TEXT NOT NULL,
+    id_usuario INT NOT NULL,
+    direccion_calle VARCHAR(255) NOT NULL,
+    numero_calle VARCHAR(10) NOT NULL,
+    id_ciudad INT NOT NULL
+);
+
+CREATE TABLE IMAGEN (
+    id_imagen SERIAL PRIMARY KEY,
+    id_alquiler INT NOT NULL,
+    url VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE CIUDAD (
+    id_ciudad SERIAL PRIMARY KEY,
+    nombre VARCHAR(100) NOT NULL,
+    provincia VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE FAVORITOS (
+    id_favorito SERIAL PRIMARY KEY,
+    id_usuario INT NOT NULL,
+    id_alquiler INT NOT NULL,
+    UNIQUE (id_usuario, id_alquiler)
+);
+
+-- FK de PUBLICACION hacia USERS
+ALTER TABLE PUBLICACION
+ADD CONSTRAINT fk_publicacion_usuario
+FOREIGN KEY (id_usuario) REFERENCES USERS(id_usuario)
+ON DELETE CASCADE;
+
+-- FK de PUBLICACION hacia CIUDAD
+ALTER TABLE PUBLICACION
+ADD CONSTRAINT fk_publicacion_ciudad
+FOREIGN KEY (id_ciudad) REFERENCES CIUDAD(id_ciudad);
+
+-- FK de IMAGEN hacia PUBLICACION
+ALTER TABLE IMAGEN
+ADD CONSTRAINT fk_imagen_publicacion
+FOREIGN KEY (id_alquiler) REFERENCES PUBLICACION(id_alquiler)
+ON DELETE CASCADE;
+
+-- FK de FAVORITOS hacia USERS
+ALTER TABLE FAVORITOS
+ADD CONSTRAINT fk_favoritos_usuario
+FOREIGN KEY (id_usuario) REFERENCES USERS(id_usuario)
+ON DELETE CASCADE;
+
+-- FK de FAVORITOS hacia PUBLICACION
+ALTER TABLE FAVORITOS
+ADD CONSTRAINT fk_favoritos_publicacion
+FOREIGN KEY (id_alquiler) REFERENCES PUBLICACION(id_alquiler)
+ON DELETE CASCADE;
