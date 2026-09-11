@@ -1,4 +1,5 @@
 test:
+    docker compose down -v
 	@echo "Generando sqlc y compilando"
 	sqlc generate
 	go build ./...
