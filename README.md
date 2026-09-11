@@ -5,7 +5,7 @@ Integrantes: Valentin Tonelotto y Clara Yunis
 
 ## Dominio
 
-Nuestra aplicación web consiste en un sistema de visualización, administración y difusión de alquileres de interés turistico. Se podran realizar publicaciones sobre las propiedades a alquilar con su respectiva información (numero de contacto, descripcion, imagenes, etc). El usuario también podra guardar una lista de sus propiedas favoritas.
+Nuestra aplicación web consiste en un sistema de visualización, administración y difusión de alquileres de interés turistico. Se podran realizar publicaciones sobre las propiedades a alquilar con su respectiva información (numero de contacto, descripcion, imagenes, etc). El usuario también podra guardar una lista de sus propiedades favoritas.
 
 ## Documentacion
 
