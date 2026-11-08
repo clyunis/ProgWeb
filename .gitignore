@@ -1,3 +1,4 @@
 db/sqlc/
 /tp2
 tmp/
+uploads/

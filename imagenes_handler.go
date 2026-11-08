@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	db "tp3/db/sqlc"
+	db "tp4/db/sqlc"
 )
 
 func imagenesHandler(w http.ResponseWriter, r *http.Request) {
@@ -47,15 +47,20 @@ func imagenesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// GET /imagenes?id_alquiler={id}
-// Nota: no existe un ListImagenes general en queries.sql, solo
-// ListImagenesByPublicacion. Por eso el listado exige este query param
-// en lugar de devolver todas las imágenes de la base.
+// GET /imagenes?id_alquiler={id} -> imágenes de una publicación
+// GET /imagenes                  -> todas (la página principal las agrupa por publicación)
 func getImagenesByPublicacion(w http.ResponseWriter, r *http.Request) {
 	idStr := r.URL.Query().Get("id_alquiler")
 	if idStr == "" {
-		w.WriteHeader(http.StatusBadRequest)
-		json.NewEncoder(w).Encode(map[string]string{"error": "El parámetro id_alquiler es obligatorio"})
+		todas, err := queries.ListImagenes(r.Context())
+		if err != nil {
+			escribirError(w, http.StatusInternalServerError, "Error al consultar la base de datos")
+			return
+		}
+		if todas == nil {
+			todas = []db.Imagen{}
+		}
+		escribirJSON(w, http.StatusOK, todas)
 		return
 	}
 	id, err := strconv.Atoi(idStr)
@@ -172,7 +177,8 @@ func updateImagen(w http.ResponseWriter, r *http.Request, id int32) {
 func deleteImagen(w http.ResponseWriter, r *http.Request, id int32) {
 	ctx := r.Context()
 
-	if _, err := queries.GetImagen(ctx, id); err != nil {
+	img, err := queries.GetImagen(ctx, id)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Imagen no encontrada"})
@@ -187,6 +193,7 @@ func deleteImagen(w http.ResponseWriter, r *http.Request, id int32) {
 		json.NewEncoder(w).Encode(map[string]string{"error": "Error al eliminar"})
 		return
 	}
+	borrarArchivosSubidos([]db.Imagen{img}) // si era un archivo subido, también lo borramos del disco
 
 	w.WriteHeader(http.StatusNoContent) // 204
 }

@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	db "tp3/db/sqlc"
+	db "tp4/db/sqlc"
 )
 
 func usersHandler(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +97,15 @@ func createUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Guardamos el hash bcrypt, nunca la contraseña en texto plano
+	hash, err := hashearPassword(params.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Error al procesar la contraseña"})
+		return
+	}
+	params.Password = hash
+
 	ctx := r.Context()
 	idGenerado, err := queries.CreateUser(ctx, params)
 	if err != nil {
@@ -133,6 +142,12 @@ func getUser(w http.ResponseWriter, r *http.Request, id int32) {
 func updateUser(w http.ResponseWriter, r *http.Request, id int32) {
 	ctx := r.Context()
 
+	// Cada usuario solo puede modificar su propia cuenta
+	if usuarioActual(r).IDUsuario != id {
+		escribirError(w, http.StatusForbidden, "Solo podés modificar tu propia cuenta")
+		return
+	}
+
 	var params db.UpdateUserParams
 	if err := json.NewDecoder(r.Body).Decode(&params); err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -163,6 +178,14 @@ func updateUser(w http.ResponseWriter, r *http.Request, id int32) {
 
 	params.IDUsuario = id
 
+	hash, err := hashearPassword(params.Password)
+	if err != nil {
+		w.WriteHeader(http.StatusInternalServerError)
+		json.NewEncoder(w).Encode(map[string]string{"error": "Error al procesar la contraseña"})
+		return
+	}
+	params.Password = hash
+
 	// Verificamos que exista antes de actualizar, para poder devolver 404
 	if _, err := queries.GetUser(ctx, id); err != nil {
 		if err == sql.ErrNoRows {
@@ -189,6 +212,12 @@ func updateUser(w http.ResponseWriter, r *http.Request, id int32) {
 func deleteUser(w http.ResponseWriter, r *http.Request, id int32) {
 	ctx := r.Context()
 
+	// Cada usuario solo puede eliminar su propia cuenta
+	if usuarioActual(r).IDUsuario != id {
+		escribirError(w, http.StatusForbidden, "Solo podés eliminar tu propia cuenta")
+		return
+	}
+
 	if _, err := queries.GetUser(ctx, id); err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotFound)
@@ -199,11 +228,16 @@ func deleteUser(w http.ResponseWriter, r *http.Request, id int32) {
 		return
 	}
 
+	// Imágenes de todas sus publicaciones: las filas se borran en cascada,
+	// los archivos en disco los borramos nosotros después.
+	imagenes, _ := queries.ListImagenesByUsuario(ctx, id)
+
 	if err := queries.DeleteUser(ctx, id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Error al eliminar"})
 		return
 	}
+	borrarArchivosSubidos(imagenes)
 
 	w.WriteHeader(http.StatusNoContent) // 204
 }

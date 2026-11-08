@@ -1,4 +1,4 @@
-APP_NAME := tp3
+APP_NAME := tp4
 
 .PHONY: generate build db-up db-down run hurl clean
 
@@ -16,6 +16,7 @@ db-up:
 
 db-down:
 	docker compose down -v
+	rm -rf uploads
 
 run: build db-up
 	./tmp/$(APP_NAME)

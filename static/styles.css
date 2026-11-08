@@ -1,0 +1,858 @@
+/* ==========================================================
+   Techito: estilos
+   ========================================================== */
+
+/* Colores y valores reutilizables (paleta "techo de tejas") */
+:root {
+    --fondo: #faf7f2;
+    --panel: #ffffff;
+    --texto: #1f2933;
+    --suave: #6b6560;
+    --borde: #ece5dc;
+    --primario: #e0583c;
+    --primario-hover: #c84529;
+    --primario-claro: #fbe3dc;
+    --peligro: #c62828;
+    --ok: #2e7d32;
+    --radio: 14px;
+    --sombra: 0 1px 2px rgb(31 41 51 / 6%), 0 4px 16px rgb(31 41 51 / 6%);
+}
+
+* {
+    box-sizing: border-box;
+}
+
+/* Que el atributo hidden gane aunque el elemento tenga display: flex */
+[hidden] {
+    display: none !important;
+}
+
+body {
+    margin: 0;
+    font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    background: var(--fondo);
+    color: var(--texto);
+    line-height: 1.5;
+}
+
+/* ---------- Botones ---------- */
+
+button,
+.boton,
+.btn-grande {
+    font: inherit;
+    cursor: pointer;
+    border: none;
+    border-radius: 999px;
+    padding: 0.6rem 1.2rem;
+    background: var(--primario);
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+    display: inline-block;
+}
+
+button:hover,
+.boton:hover,
+.btn-grande:hover {
+    background: var(--primario-hover);
+}
+
+button:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+.btn-grande {
+    padding: 0.85rem 1.6rem;
+    font-size: 1.05rem;
+    box-shadow: 0 6px 18px rgb(224 88 60 / 30%);
+}
+
+.btn-secundario {
+    background: transparent;
+    color: var(--texto);
+    border: 1px solid var(--borde);
+}
+
+.btn-secundario:hover {
+    background: var(--borde);
+}
+
+/* ---------- Barra superior ---------- */
+
+.barra {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+}
+
+.marca {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 1.6rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--texto);
+    text-decoration: none;
+}
+
+.sesion {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.saludo {
+    color: var(--suave);
+}
+
+/* ---------- Hero ---------- */
+
+.hero {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 2rem;
+}
+
+.hero h1 {
+    font-size: clamp(2.2rem, 6vw, 3.6rem);
+    line-height: 1.05;
+    letter-spacing: -0.04em;
+    margin: 0 0 0.5rem;
+}
+
+.hero p {
+    color: var(--suave);
+    font-size: 1.15rem;
+    margin: 0 0 1.5rem;
+    max-width: 36rem;
+}
+
+/* ---------- Grilla de publicaciones (CSS Grid) ---------- */
+
+.contenido {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 1.5rem 3rem;
+}
+
+.encabezado-lista {
+    display: flex;
+    align-items: baseline;
+    gap: 0.75rem;
+}
+
+.encabezado-lista h2 {
+    margin: 0 0 1rem;
+}
+
+.contador {
+    color: var(--suave);
+}
+
+/* auto-fill + minmax: tantas columnas como entren, cada una de al menos 280px */
+.grilla {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.5rem;
+}
+
+.tarjeta {
+    position: relative;
+    background: var(--panel);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    transition: transform 0.15s, box-shadow 0.15s;
+}
+
+.tarjeta:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 2px 4px rgb(31 41 51 / 6%), 0 12px 28px rgb(31 41 51 / 12%);
+}
+
+/* El link del título se "estira" para cubrir toda la tarjeta */
+.enlace-tarjeta {
+    color: inherit;
+    text-decoration: none;
+}
+
+.enlace-tarjeta::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+}
+
+.tarjeta:has(.enlace-tarjeta:focus-visible) {
+    outline: 3px solid var(--primario);
+    outline-offset: 2px;
+}
+
+.enlace-tarjeta:focus-visible {
+    outline: none;
+}
+
+/* El botón "Eliminar" queda por encima del link estirado */
+.tarjeta .btn-eliminar {
+    position: relative;
+    z-index: 1;
+}
+
+.galeria {
+    position: relative;
+    background: var(--primario-claro);
+}
+
+.portada,
+.sin-foto {
+    display: block;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+}
+
+.sin-foto {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--primario);
+    font-weight: 600;
+    background: repeating-linear-gradient(45deg, var(--primario-claro) 0 12px, #fdeee9 12px 24px);
+}
+
+.cantidad-fotos {
+    position: absolute;
+    top: 0.6rem;
+    right: 0.6rem;
+    background: rgb(31 41 51 / 70%);
+    color: white;
+    font-size: 0.8rem;
+    padding: 0.15rem 0.55rem;
+    border-radius: 999px;
+}
+
+.miniatura {
+    flex: 0 0 auto;
+    padding: 0;
+    border-radius: 6px;
+    background: none;
+    border: 2px solid transparent;
+    overflow: hidden;
+    opacity: 0.65;
+}
+
+.miniatura:hover {
+    background: none;
+    opacity: 1;
+}
+
+.miniatura.activa {
+    border-color: var(--primario);
+    opacity: 1;
+}
+
+.miniatura img {
+    display: block;
+    width: 88px;
+    height: 66px;
+    object-fit: cover;
+}
+
+.cuerpo {
+    padding: 1rem 1.1rem 1.1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    flex: 1;
+}
+
+.cuerpo h3 {
+    margin: 0;
+    font-size: 1.15rem;
+    line-height: 1.3;
+}
+
+.cuerpo p {
+    margin: 0;
+}
+
+.ubicacion {
+    color: var(--primario);
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.direccion {
+    color: var(--suave);
+    font-size: 0.9rem;
+}
+
+.descripcion {
+    margin-top: 0.35rem !important;
+    /* como mucho 3 líneas, el resto con "…" */
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+}
+
+.pie {
+    margin-top: auto;
+    padding-top: 0.75rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.autor {
+    color: var(--suave);
+    font-size: 0.85rem;
+}
+
+.btn-eliminar {
+    background: transparent;
+    color: var(--peligro);
+    border: 1px solid currentColor;
+    padding: 0.3rem 0.85rem;
+    font-size: 0.85rem;
+}
+
+.btn-eliminar:hover {
+    background: var(--peligro);
+    color: white;
+}
+
+.vacio {
+    grid-column: 1 / -1;
+    color: var(--suave);
+    text-align: center;
+    padding: 3rem 1rem;
+    background: var(--panel);
+    border-radius: var(--radio);
+    border: 2px dashed var(--borde);
+}
+
+/* ---------- Formularios ---------- */
+
+.formulario {
+    display: flex;
+    flex-direction: column;
+    gap: 0.9rem;
+}
+
+.formulario label,
+.etiqueta {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+}
+
+.etiqueta small {
+    font-weight: normal;
+    color: var(--suave);
+}
+
+.fila {
+    display: flex;
+    gap: 0.75rem;
+}
+
+.fila .crece {
+    flex: 1;
+}
+
+.fila .angosto {
+    width: 6.5rem;
+}
+
+input,
+textarea,
+select {
+    font: inherit;
+    font-weight: normal;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--borde);
+    border-radius: 8px;
+    width: 100%;
+    background: white;
+    color: var(--texto);
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+    outline: 2px solid var(--primario);
+    outline-offset: 1px;
+}
+
+.mensaje {
+    margin: 0;
+    font-size: 0.9rem;
+    min-height: 1.4em;
+}
+
+.mensaje.ok {
+    color: var(--ok);
+}
+
+.mensaje.error {
+    color: var(--peligro);
+}
+
+/* ---------- Diálogo para publicar ---------- */
+
+.dialogo {
+    border: none;
+    border-radius: var(--radio);
+    padding: 1.5rem;
+    width: min(560px, calc(100% - 2rem));
+    max-height: calc(100% - 2rem);
+    box-shadow: 0 20px 60px rgb(31 41 51 / 30%);
+}
+
+.dialogo::backdrop {
+    background: rgb(31 41 51 / 55%);
+}
+
+.dialogo-titulo {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dialogo-titulo h2 {
+    margin: 0;
+}
+
+.btn-cerrar {
+    background: transparent;
+    color: var(--suave);
+    font-size: 1.6rem;
+    line-height: 1;
+    padding: 0.1rem 0.6rem;
+}
+
+.btn-cerrar:hover {
+    background: var(--borde);
+}
+
+.campo-fotos {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+/* El input de archivos ocupa toda la zona pero es invisible:
+   así funciona tanto el click como arrastrar y soltar */
+.zona-archivos {
+    position: relative;
+    border: 2px dashed var(--primario);
+    border-radius: 10px;
+    background: #fff8f5;
+    padding: 1.2rem;
+    text-align: center;
+    color: var(--primario);
+    cursor: pointer;
+}
+
+.zona-archivos:hover,
+.zona-archivos:focus-within {
+    background: var(--primario-claro);
+}
+
+.zona-archivos input {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+}
+
+.previews {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+    gap: 0.5rem;
+}
+
+.preview {
+    position: relative;
+}
+
+.preview img {
+    display: block;
+    width: 100%;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: 8px;
+}
+
+/* La primera foto es la portada */
+.preview.principal::after {
+    content: "Portada";
+    position: absolute;
+    left: 4px;
+    bottom: 4px;
+    background: var(--primario);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 600;
+    padding: 0 0.4rem;
+    border-radius: 4px;
+}
+
+.quitar {
+    position: absolute;
+    top: 4px;
+    right: 4px;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    line-height: 1;
+    background: rgb(31 41 51 / 75%);
+}
+
+.acciones {
+    display: flex;
+    justify-content: flex-end;
+    gap: 0.6rem;
+}
+
+/* ---------- Página de login ---------- */
+
+.pagina-login {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    padding: 1.5rem;
+}
+
+.panel {
+    background: var(--panel);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 1.5rem;
+}
+
+.caja-login {
+    width: 100%;
+    max-width: 420px;
+}
+
+.caja-login .marca {
+    justify-content: center;
+    margin-bottom: 0.25rem;
+}
+
+.caja-login .lema {
+    text-align: center;
+    color: var(--suave);
+    margin: 0 0 1.25rem;
+}
+
+.pestanias {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    margin-bottom: 1.25rem;
+    border-bottom: 1px solid var(--borde);
+}
+
+.pestania {
+    background: transparent;
+    color: var(--suave);
+    border-radius: 0;
+    border-bottom: 2px solid transparent;
+}
+
+.pestania:hover {
+    background: var(--fondo);
+}
+
+.pestania.activa {
+    color: var(--primario);
+    border-bottom-color: var(--primario);
+}
+
+.caja-login .mensaje {
+    margin-top: 0.75rem;
+}
+
+.volver {
+    color: var(--suave);
+}
+
+/* ---------- Página de detalle (/propiedad/{id}) ---------- */
+
+.detalle {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0.5rem 1.5rem 3rem;
+}
+
+.detalle > .volver {
+    display: inline-block;
+    margin-bottom: 1rem;
+    text-decoration: none;
+}
+
+.detalle > .volver:hover {
+    color: var(--primario);
+}
+
+.cargando {
+    color: var(--suave);
+}
+
+.encabezado-detalle {
+    margin-bottom: 1.5rem;
+}
+
+.encabezado-detalle h1 {
+    font-size: clamp(1.8rem, 4vw, 2.6rem);
+    line-height: 1.15;
+    letter-spacing: -0.03em;
+    margin: 0.2rem 0;
+}
+
+.encabezado-detalle p {
+    margin: 0;
+}
+
+/* Grid de dos columnas: contenido + tarjeta de contacto */
+.layout-detalle {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    gap: 2rem;
+    align-items: start;
+}
+
+.columna-principal {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.galeria-detalle .sin-foto {
+    border-radius: var(--radio);
+    aspect-ratio: 16 / 9;
+}
+
+.visor {
+    position: relative;
+    aspect-ratio: 16 / 10;
+    background: var(--texto);
+    border-radius: var(--radio);
+    overflow: hidden;
+}
+
+/* contain: la foto se ve entera, sin recortar */
+.foto-principal {
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+}
+
+.flecha {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    font-size: 1.8rem;
+    line-height: 1;
+    background: rgb(255 255 255 / 85%);
+    color: var(--texto);
+    box-shadow: var(--sombra);
+}
+
+.flecha:hover {
+    background: white;
+}
+
+.anterior {
+    left: 0.75rem;
+}
+
+.siguiente {
+    right: 0.75rem;
+}
+
+.contador-fotos {
+    position: absolute;
+    right: 0.75rem;
+    bottom: 0.75rem;
+    background: rgb(31 41 51 / 70%);
+    color: white;
+    font-size: 0.85rem;
+    padding: 0.15rem 0.6rem;
+    border-radius: 999px;
+}
+
+.tira-miniaturas {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.6rem;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+}
+
+.tira-miniaturas:empty {
+    display: none;
+}
+
+.bloque {
+    background: var(--panel);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 1.25rem 1.5rem;
+}
+
+.bloque h2,
+.contacto h2 {
+    font-size: 1.15rem;
+    margin: 0 0 0.75rem;
+}
+
+/* Respeta los saltos de línea que escribió el dueño */
+.texto-largo {
+    margin: 0;
+    white-space: pre-line;
+}
+
+.datos-ubicacion {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 0.4rem 1.5rem;
+    margin: 0;
+}
+
+.datos-ubicacion dt {
+    color: var(--suave);
+}
+
+.datos-ubicacion dd {
+    margin: 0;
+    font-weight: 600;
+}
+
+/* Tarjeta de contacto: queda fija al bajar */
+.contacto {
+    position: sticky;
+    top: 1rem;
+    background: var(--panel);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 1.25rem 1.5rem;
+}
+
+.persona {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+}
+
+.avatar {
+    display: grid;
+    place-items: center;
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primario-claro);
+    color: var(--primario);
+    font-weight: 800;
+}
+
+.nombre-dueno {
+    font-weight: 700;
+    font-size: 1.05rem;
+}
+
+.datos-contacto {
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+}
+
+.datos-contacto .nota {
+    margin: 0;
+    color: var(--suave);
+}
+
+.dato {
+    color: var(--texto);
+    text-decoration: none;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--borde);
+    border-radius: 10px;
+    overflow-wrap: anywhere;
+}
+
+.dato:hover {
+    border-color: var(--primario);
+    color: var(--primario);
+}
+
+.boton-ancho {
+    text-align: center;
+}
+
+.aviso {
+    text-align: center;
+    padding: 3rem 1rem;
+}
+
+.aviso p {
+    color: var(--suave);
+    margin-bottom: 1.5rem;
+}
+
+@media (max-width: 860px) {
+    .layout-detalle {
+        grid-template-columns: 1fr;
+    }
+
+    .contacto {
+        position: static;
+    }
+}
+
+/* ---------- Pantallas chicas ---------- */
+
+@media (max-width: 600px) {
+    .hero {
+        padding-top: 1.5rem;
+    }
+
+    .saludo {
+        display: none;
+    }
+
+    .fila {
+        flex-direction: column;
+    }
+
+    .fila .angosto {
+        width: auto;
+    }
+}

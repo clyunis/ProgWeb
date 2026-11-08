@@ -5,7 +5,7 @@ import (
 	"log"
 	"net/http"
 
-	db "tp3/db/sqlc"
+	db "tp4/db/sqlc"
 
 	_ "github.com/lib/pq"
 )
@@ -26,21 +26,42 @@ func main() {
 
 	queries = db.New(conn)
 
-	http.HandleFunc("/publicaciones", publicacionesHandler)
-	http.HandleFunc("/publicaciones/", publicacionesHandler)
+	// Autenticación con JWT en cookie HttpOnly
+	http.HandleFunc("/signin", signinHandler)
+	http.HandleFunc("/welcome", welcomeHandler)
+	http.HandleFunc("/refresh", refreshHandler)
+	http.HandleFunc("/logout", logoutHandler)
 
-	http.HandleFunc("/ciudades", ciudadesHandler)
-	http.HandleFunc("/ciudades/", ciudadesHandler)
+	// API REST: los GET son públicos; POST, PUT y DELETE requieren sesión
+	// (salvo POST /users, que es el registro).
+	http.HandleFunc("/publicaciones", conSesionParaEscribir(publicacionesHandler))
+	http.HandleFunc("/publicaciones/", conSesionParaEscribir(publicacionesHandler))
 
-	http.HandleFunc("/users", usersHandler)
-	http.HandleFunc("/users/", usersHandler)
+	http.HandleFunc("/ciudades", conSesionParaEscribir(ciudadesHandler))
+	http.HandleFunc("/ciudades/", conSesionParaEscribir(ciudadesHandler))
 
-	http.HandleFunc("/imagenes", imagenesHandler)
-	http.HandleFunc("/imagenes/", imagenesHandler)
+	http.HandleFunc("/users", conSesionParaEscribir(usersHandler))
+	http.HandleFunc("/users/", conSesionParaEscribir(usersHandler))
 
-	http.HandleFunc("/favoritos", favoritosHandler)
-	http.HandleFunc("/favoritos/", favoritosHandler)
+	http.HandleFunc("/imagenes", conSesionParaEscribir(imagenesHandler))
+	http.HandleFunc("/imagenes/", conSesionParaEscribir(imagenesHandler))
 
-	log.Println("Servidor corriendo en el puerto 8080...")
+	http.HandleFunc("/favoritos", conSesionParaEscribir(favoritosHandler))
+	http.HandleFunc("/favoritos/", conSesionParaEscribir(favoritosHandler))
+
+	// Imágenes subidas por los usuarios
+	http.Handle("/uploads/", uploadsHandler())
+
+	// Página de detalle: /propiedad/{id} siempre devuelve el mismo HTML,
+	// y publicacion.js lee el id de la URL y pide los datos a la API.
+	http.HandleFunc("/propiedad/", func(w http.ResponseWriter, r *http.Request) {
+		http.ServeFile(w, r, "static/publicacion.html")
+	})
+
+	// Frontend: sirve index.html, app.js y styles.css desde la carpeta static.
+	// Como "/" es la ruta menos específica, solo atiende lo que no matchea con la API.
+	http.Handle("/", http.FileServer(http.Dir("static")))
+
+	log.Println("Servidor corriendo en http://localhost:8080 ...")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

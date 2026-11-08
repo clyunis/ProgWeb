@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ingresar · Techito</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="pagina-login">
+    <main class="panel caja-login">
+        <a class="marca" href="/">
+            <img src="logo.svg" alt="" width="34" height="34">
+            Techito
+        </a>
+        <p class="lema">Encontrá tu lugar.</p>
+
+        <div class="pestanias" role="tablist">
+            <button type="button" class="pestania activa" data-vista="ingresar">Ingresar</button>
+            <button type="button" class="pestania" data-vista="registrarse">Crear cuenta</button>
+        </div>
+
+        <!-- Login -->
+        <form id="form-login" class="formulario">
+            <label>
+                Email
+                <input type="email" name="email" required autocomplete="username">
+            </label>
+            <label>
+                Contraseña
+                <input type="password" name="password" required autocomplete="current-password">
+            </label>
+            <button type="submit">Ingresar</button>
+        </form>
+
+        <!-- Registro -->
+        <form id="form-registro" class="formulario" hidden>
+            <div class="fila">
+                <label class="crece">
+                    Nombre
+                    <input type="text" name="nombre" required maxlength="100">
+                </label>
+                <label class="crece">
+                    Apellido
+                    <input type="text" name="apellido" required maxlength="100">
+                </label>
+            </div>
+            <div class="fila">
+                <label class="crece">
+                    DNI
+                    <input type="text" name="dni" required maxlength="9" inputmode="numeric">
+                </label>
+                <label class="crece">
+                    Teléfono
+                    <input type="tel" name="telefono" required maxlength="20">
+                </label>
+            </div>
+            <label>
+                Email
+                <input type="email" name="email" required maxlength="100" autocomplete="username">
+            </label>
+            <label>
+                Contraseña
+                <input type="password" name="password" required minlength="6" autocomplete="new-password">
+            </label>
+            <button type="submit">Crear cuenta</button>
+        </form>
+
+        <p id="mensaje" class="mensaje" role="status"></p>
+    </main>
+
+    <a class="volver" href="/">← Ver las publicaciones sin ingresar</a>
+
+    <script src="auth.js"></script>
+    <script src="login.js"></script>
+</body>
+</html>

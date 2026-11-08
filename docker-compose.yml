@@ -10,7 +10,9 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-      - ./db/schema/schema.sql:/docker-entrypoint-initdb.d/init.sql
+      # Postgres ejecuta estos scripts en orden alfabético al crear la base
+      - ./db/schema/schema.sql:/docker-entrypoint-initdb.d/01-schema.sql
+      - ./db/seed.sql:/docker-entrypoint-initdb.d/02-seed.sql
 
 volumes:
   postgres_data:

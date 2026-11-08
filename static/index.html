@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Techito · Encontrá tu lugar</title>
+    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <header class="barra">
+        <a class="marca" href="/">
+            <img src="logo.svg" alt="" width="34" height="34">
+            Techito
+        </a>
+        <!-- Lo completa app.js según haya o no sesión -->
+        <div id="zona-sesion" class="sesion"></div>
+    </header>
+
+    <section class="hero">
+        <h1>Encontrá tu lugar.</h1>
+        <p>Departamentos, casas y habitaciones en alquiler, publicados por sus dueños.</p>
+        <div id="zona-publicar"></div>
+    </section>
+
+    <main class="contenido">
+        <div class="encabezado-lista">
+            <h2>Publicaciones</h2>
+            <span id="contador" class="contador"></span>
+        </div>
+        <!-- Contenedor donde JavaScript dibuja las tarjetas -->
+        <ul id="lista-publicaciones" class="grilla"></ul>
+    </main>
+
+    <!-- Formulario para publicar (solo se abre con sesión iniciada) -->
+    <dialog id="dialogo-publicar" class="dialogo">
+        <form id="form-publicacion" class="formulario">
+            <div class="dialogo-titulo">
+                <h2>Publicar una propiedad</h2>
+                <button type="button" class="btn-cerrar" data-cerrar aria-label="Cerrar">×</button>
+            </div>
+
+            <label>
+                Título
+                <input type="text" name="titulo" required maxlength="200" placeholder="Ej: Depto 2 ambientes con balcón">
+            </label>
+
+            <label>
+                Descripción
+                <textarea name="descripcion" rows="4" required placeholder="Contá cómo es, qué incluye, para quién es ideal…"></textarea>
+            </label>
+
+            <div class="fila">
+                <label class="crece">
+                    Calle
+                    <input type="text" name="direccion_calle" required maxlength="255">
+                </label>
+                <label class="angosto">
+                    Número
+                    <input type="text" name="numero_calle" required maxlength="10">
+                </label>
+            </div>
+
+            <label>
+                Ciudad
+                <select name="id_ciudad" id="select-ciudad" required></select>
+            </label>
+
+            <div class="campo-fotos">
+                <span class="etiqueta">Fotos <small>(hasta 8, máximo 5 MB cada una)</small></span>
+                <label class="zona-archivos">
+                    <input type="file" id="input-fotos" accept="image/jpeg,image/png,image/webp,image/gif" multiple>
+                    <span>📷 Elegí fotos o arrastralas acá</span>
+                </label>
+                <ul id="previews" class="previews"></ul>
+            </div>
+
+            <p id="mensaje" class="mensaje" role="status"></p>
+
+            <div class="acciones">
+                <button type="button" class="btn-secundario" data-cerrar>Cancelar</button>
+                <button type="submit" id="btn-enviar">Publicar</button>
+            </div>
+        </form>
+    </dialog>
+
+    <script src="auth.js"></script>
+    <script src="comun.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

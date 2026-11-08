@@ -6,7 +6,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
-	db "tp3/db/sqlc"
+	db "tp4/db/sqlc"
 )
 
 func publicacionesHandler(w http.ResponseWriter, r *http.Request) {
@@ -27,6 +27,40 @@ func publicacionesHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	idStr := strings.TrimPrefix(path, "/")
+
+	// POST /publicaciones/{id}/imagenes: subir imágenes a una publicación
+	if idPub, ok := strings.CutSuffix(idStr, "/imagenes"); ok {
+		id, err := strconv.Atoi(idPub)
+		if err != nil {
+			escribirError(w, http.StatusBadRequest, "ID de publicación inválido")
+			return
+		}
+		if r.Method != http.MethodPost {
+			escribirError(w, http.StatusMethodNotAllowed, "Método no permitido")
+			return
+		}
+		subirImagenes(w, r, int32(id))
+		return
+	}
+
+	// GET /publicaciones/{id}/contacto: datos del dueño, solo con sesión iniciada
+	if idPub, ok := strings.CutSuffix(idStr, "/contacto"); ok {
+		id, err := strconv.Atoi(idPub)
+		if err != nil {
+			escribirError(w, http.StatusBadRequest, "ID de publicación inválido")
+			return
+		}
+		if r.Method != http.MethodGet {
+			escribirError(w, http.StatusMethodNotAllowed, "Método no permitido")
+			return
+		}
+		// Es un GET, así que conSesionParaEscribir lo deja pasar: lo protegemos explícitamente
+		requireAuth(func(w http.ResponseWriter, r *http.Request) {
+			getContacto(w, r, int32(id))
+		})(w, r)
+		return
+	}
+
 	id, err := strconv.Atoi(idStr)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
@@ -57,7 +91,7 @@ func getPublicaciones(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if pubs == nil {
-		pubs = []db.Publicacion{} // Retorna array vacío en lugar de null si no hay registros
+		pubs = []db.ListPublicacionesRow{} // Retorna array vacío en lugar de null si no hay registros
 	}
 
 	w.WriteHeader(http.StatusOK)
@@ -80,6 +114,9 @@ func createPublicacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// El autor es el usuario logueado (sale del token), no lo que venga en el JSON
+	params.IDUsuario = usuarioActual(r).IDUsuario
+
 	ctx := r.Context()
 	idGenerado, err := queries.CreatePublicacion(ctx, params)
 	if err != nil {
@@ -95,9 +132,10 @@ func createPublicacion(w http.ResponseWriter, r *http.Request) {
 }
 
 // GET /publicaciones/{id}
+// Incluye el nombre del autor y de la ciudad (lo usa la página de detalle).
 func getPublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 	ctx := r.Context()
-	pub, err := queries.GetPublicacion(ctx, id)
+	pub, err := queries.GetPublicacionDetalle(ctx, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotFound)
@@ -110,6 +148,22 @@ func getPublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(pub)
+}
+
+// GET /publicaciones/{id}/contacto (requiere sesión)
+// El email y el teléfono no se exponen en los endpoints públicos: así un bot que
+// recorre la página no puede juntar los datos personales de todos los dueños.
+func getContacto(w http.ResponseWriter, r *http.Request, id int32) {
+	contacto, err := queries.GetContactoPublicacion(r.Context(), id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			escribirError(w, http.StatusNotFound, "Publicación no encontrada")
+			return
+		}
+		escribirError(w, http.StatusInternalServerError, "Error al consultar la base de datos")
+		return
+	}
+	escribirJSON(w, http.StatusOK, contacto)
 }
 
 // PUT /publicaciones/{id}
@@ -131,7 +185,8 @@ func updatePublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 
 	params.IDAlquiler = id
 
-	if _, err := queries.GetPublicacion(ctx, id); err != nil {
+	pub, err := queries.GetPublicacion(ctx, id)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Publicación no encontrada"})
@@ -140,6 +195,13 @@ func updatePublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 		w.WriteHeader(http.StatusInternalServerError)
 		return
 	}
+
+	// Solo el dueño puede modificarla, y no puede cambiar el autor
+	if pub.IDUsuario != usuarioActual(r).IDUsuario {
+		escribirError(w, http.StatusForbidden, "Solo podés modificar tus propias publicaciones")
+		return
+	}
+	params.IDUsuario = pub.IDUsuario
 
 	if err := queries.UpdatePublicacion(ctx, params); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
@@ -156,7 +218,8 @@ func updatePublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 func deletePublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 	ctx := r.Context()
 
-	if _, err := queries.GetPublicacion(ctx, id); err != nil {
+	pub, err := queries.GetPublicacion(ctx, id)
+	if err != nil {
 		if err == sql.ErrNoRows {
 			w.WriteHeader(http.StatusNotFound)
 			json.NewEncoder(w).Encode(map[string]string{"error": "Publicación no encontrada"})
@@ -166,11 +229,22 @@ func deletePublicacion(w http.ResponseWriter, r *http.Request, id int32) {
 		return
 	}
 
+	// Solo el dueño puede eliminarla
+	if pub.IDUsuario != usuarioActual(r).IDUsuario {
+		escribirError(w, http.StatusForbidden, "Solo podés eliminar tus propias publicaciones")
+		return
+	}
+
+	// Anotamos sus imágenes antes de borrar: el ON DELETE CASCADE elimina
+	// las filas de IMAGEN, pero los archivos en disco los tenemos que borrar nosotros.
+	imagenes, _ := queries.ListImagenesByPublicacion(ctx, id)
+
 	if err := queries.DeletePublicacion(ctx, id); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		json.NewEncoder(w).Encode(map[string]string{"error": "Error al eliminar"})
 		return
 	}
+	borrarArchivosSubidos(imagenes)
 
 	w.WriteHeader(http.StatusNoContent) // 204
 }

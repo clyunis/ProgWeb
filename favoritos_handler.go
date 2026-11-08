@@ -8,7 +8,7 @@ import (
 	"strconv"
 	"strings"
 
-	db "tp3/db/sqlc"
+	db "tp4/db/sqlc"
 )
 
 func favoritosHandler(w http.ResponseWriter, r *http.Request) {

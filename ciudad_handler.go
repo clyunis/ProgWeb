@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	db "tp3/db/sqlc"
+	db "tp4/db/sqlc"
 )
 
 func ciudadesHandler(w http.ResponseWriter, r *http.Request) {

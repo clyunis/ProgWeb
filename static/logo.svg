@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">
+  <!-- Techo -->
+  <path d="M6 30 L32 8 L58 30" fill="none" stroke="#e0583c" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Casa -->
+  <path d="M14 29 V54 a3 3 0 0 0 3 3 H47 a3 3 0 0 0 3-3 V29" fill="#fbe3dc" stroke="#1f2933" stroke-width="4" stroke-linejoin="round"/>
+  <!-- Puerta -->
+  <rect x="27" y="39" width="10" height="18" rx="2" fill="#1f2933"/>
+</svg>
