@@ -1,6 +1,6 @@
-# Techito 🏠 — Trabajo Práctico 4
+# Trabajo Práctico 4
 
-**Techito** es una app de alquileres: cualquiera puede ver las propiedades publicadas, y quien inicia sesión puede publicar las suyas con fotos.
+Nuestra aplicación es una app de alquileres: cualquiera puede ver las propiedades publicadas, y quien inicia sesión puede publicar las suyas con fotos.
 
 En el TP3 implementamos los handlers para las operaciones CRUD sobre las tablas de nuestro dominio, exponiendo la capa de datos generada con sqlc a través de una API REST con endpoints HTTP.
 
