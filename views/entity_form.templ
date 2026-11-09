@@ -1,0 +1,49 @@
+package views
+
+import db "tp5/db/sqlc"
+
+templ PublicacionForm(ciudades []db.Ciudad, form FormPublicacion) {
+	<details class="publicar" open?={ form.Error != "" }>
+		<summary class="btn-grande">+ Publicar propiedad</summary>
+		<form method="post" action="/publicaciones" enctype="multipart/form-data" class="formulario panel-publicar">
+			<h2>Publicar una propiedad</h2>
+			if form.Error != "" {
+				<p class="mensaje error" role="alert">{ form.Error }</p>
+			}
+			<label>
+				Título
+				<input type="text" name="titulo" required maxlength="200" value={ form.Titulo } placeholder="Ej: Depto 2 ambientes con balcón"/>
+			</label>
+			<label>
+				Descripción
+				<textarea name="descripcion" rows="4" required placeholder="Contá cómo es, qué incluye, para quién es ideal…">{ form.Descripcion }</textarea>
+			</label>
+			<div class="fila">
+				<label class="crece">
+					Calle
+					<input type="text" name="direccion_calle" required maxlength="255" value={ form.Calle }/>
+				</label>
+				<label class="angosto">
+					Número
+					<input type="text" name="numero_calle" required maxlength="10" value={ form.Numero }/>
+				</label>
+			</div>
+			<label>
+				Ciudad
+				<select name="id_ciudad" required>
+					<option value="">Elegí una ciudad</option>
+					for _, c := range ciudades {
+						<option value={ idTexto(c.IDCiudad) } selected?={ c.IDCiudad == form.IDCiudad }>{ c.Nombre }, { c.Provincia }</option>
+					}
+				</select>
+			</label>
+			<label>
+				<span>Fotos <small>(hasta 8, máximo 5 MB cada una)</small></span>
+				<input type="file" name="imagenes" multiple accept="image/jpeg,image/png,image/webp,image/gif"/>
+			</label>
+			<div class="acciones">
+				<button type="submit">Publicar</button>
+			</div>
+		</form>
+	</details>
+}

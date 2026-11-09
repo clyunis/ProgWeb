@@ -1,5 +1,5 @@
 /* ==========================================================
-   Techito: estilos
+   TuAlquiler: estilos
    ========================================================== */
 
 /* Colores y valores reutilizables (paleta "techo de tejas") */
@@ -13,18 +13,12 @@
     --primario-hover: #c84529;
     --primario-claro: #fbe3dc;
     --peligro: #c62828;
-    --ok: #2e7d32;
     --radio: 14px;
     --sombra: 0 1px 2px rgb(31 41 51 / 6%), 0 4px 16px rgb(31 41 51 / 6%);
 }
 
 * {
     box-sizing: border-box;
-}
-
-/* Que el atributo hidden gane aunque el elemento tenga display: flex */
-[hidden] {
-    display: none !important;
 }
 
 body {
@@ -203,10 +197,21 @@ button:disabled {
     outline: none;
 }
 
-/* El botón "Eliminar" queda por encima del link estirado */
-.tarjeta .btn-eliminar {
+/* El formulario "Eliminar" queda por encima del link estirado de la tarjeta */
+.tarjeta .form-eliminar {
     position: relative;
     z-index: 1;
+}
+
+.form-eliminar {
+    margin: 0;
+}
+
+/* En la página de detalle, el botón ocupa todo el ancho de la tarjeta de contacto */
+.datos-contacto .btn-eliminar {
+    width: 100%;
+    padding: 0.6rem 1rem;
+    font-size: 1rem;
 }
 
 .galeria {
@@ -243,6 +248,7 @@ button:disabled {
 }
 
 .miniatura {
+    display: block;
     flex: 0 0 auto;
     padding: 0;
     border-radius: 6px;
@@ -352,18 +358,12 @@ button:disabled {
     gap: 0.9rem;
 }
 
-.formulario label,
-.etiqueta {
+.formulario label {
     display: flex;
     flex-direction: column;
     gap: 0.3rem;
     font-size: 0.9rem;
     font-weight: 600;
-}
-
-.etiqueta small {
-    font-weight: normal;
-    color: var(--suave);
 }
 
 .fila {
@@ -405,126 +405,41 @@ select:focus {
     min-height: 1.4em;
 }
 
-.mensaje.ok {
-    color: var(--ok);
-}
-
 .mensaje.error {
     color: var(--peligro);
 }
 
-/* ---------- Diálogo para publicar ---------- */
+/* ---------- Formulario para publicar (<details>, sin JavaScript) ---------- */
 
-.dialogo {
-    border: none;
-    border-radius: var(--radio);
-    padding: 1.5rem;
-    width: min(560px, calc(100% - 2rem));
-    max-height: calc(100% - 2rem);
-    box-shadow: 0 20px 60px rgb(31 41 51 / 30%);
-}
-
-.dialogo::backdrop {
-    background: rgb(31 41 51 / 55%);
-}
-
-.dialogo-titulo {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-}
-
-.dialogo-titulo h2 {
-    margin: 0;
-}
-
-.btn-cerrar {
-    background: transparent;
-    color: var(--suave);
-    font-size: 1.6rem;
-    line-height: 1;
-    padding: 0.1rem 0.6rem;
-}
-
-.btn-cerrar:hover {
-    background: var(--borde);
-}
-
-.campo-fotos {
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-}
-
-/* El input de archivos ocupa toda la zona pero es invisible:
-   así funciona tanto el click como arrastrar y soltar */
-.zona-archivos {
-    position: relative;
-    border: 2px dashed var(--primario);
-    border-radius: 10px;
-    background: #fff8f5;
-    padding: 1.2rem;
-    text-align: center;
-    color: var(--primario);
-    cursor: pointer;
-}
-
-.zona-archivos:hover,
-.zona-archivos:focus-within {
-    background: var(--primario-claro);
-}
-
-.zona-archivos input {
-    position: absolute;
-    inset: 0;
-    opacity: 0;
-    cursor: pointer;
-}
-
-.previews {
+.publicar > summary {
     list-style: none;
+    cursor: pointer;
+}
+
+.publicar > summary::-webkit-details-marker {
+    display: none;
+}
+
+.publicar[open] > summary {
+    margin-bottom: 1.25rem;
+    background: var(--primario-hover);
+}
+
+.panel-publicar {
+    max-width: 640px;
+    background: var(--panel);
+    border-radius: var(--radio);
+    box-shadow: var(--sombra);
+    padding: 1.5rem;
+}
+
+.panel-publicar h2 {
     margin: 0;
-    padding: 0;
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
-    gap: 0.5rem;
 }
 
-.preview {
-    position: relative;
-}
-
-.preview img {
-    display: block;
-    width: 100%;
-    aspect-ratio: 1;
-    object-fit: cover;
-    border-radius: 8px;
-}
-
-/* La primera foto es la portada */
-.preview.principal::after {
-    content: "Portada";
-    position: absolute;
-    left: 4px;
-    bottom: 4px;
-    background: var(--primario);
-    color: white;
-    font-size: 0.7rem;
-    font-weight: 600;
-    padding: 0 0.4rem;
-    border-radius: 4px;
-}
-
-.quitar {
-    position: absolute;
-    top: 4px;
-    right: 4px;
-    width: 24px;
-    height: 24px;
-    padding: 0;
-    line-height: 1;
-    background: rgb(31 41 51 / 75%);
+.formulario label small {
+    font-weight: normal;
+    color: var(--suave);
 }
 
 .acciones {
@@ -533,17 +448,7 @@ select:focus {
     gap: 0.6rem;
 }
 
-/* ---------- Página de login ---------- */
-
-.pagina-login {
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 1rem;
-    padding: 1.5rem;
-}
+/* ---------- Páginas de login y registro ---------- */
 
 .panel {
     background: var(--panel);
@@ -555,11 +460,6 @@ select:focus {
 .caja-login {
     width: 100%;
     max-width: 420px;
-}
-
-.caja-login .marca {
-    justify-content: center;
-    margin-bottom: 0.25rem;
 }
 
 .caja-login .lema {
@@ -575,11 +475,24 @@ select:focus {
     border-bottom: 1px solid var(--borde);
 }
 
+/* las pestañas son links (<a>) entre /login y /registro */
 .pestania {
+    display: block;
+    text-align: center;
+    padding: 0.6rem 1rem;
+    font-weight: 600;
+    text-decoration: none;
     background: transparent;
     color: var(--suave);
     border-radius: 0;
     border-bottom: 2px solid transparent;
+}
+
+/* contenedor de la caja de login/registro dentro del layout */
+.contenedor-login {
+    display: flex;
+    justify-content: center;
+    padding: 1.5rem 1.5rem 3rem;
 }
 
 .pestania:hover {
@@ -615,10 +528,6 @@ select:focus {
 
 .detalle > .volver:hover {
     color: var(--primario);
-}
-
-.cargando {
-    color: var(--suave);
 }
 
 .encabezado-detalle {
@@ -683,6 +592,11 @@ select:focus {
     background: rgb(255 255 255 / 85%);
     color: var(--texto);
     box-shadow: var(--sombra);
+    /* son links <a>: los centramos como un botón redondo */
+    display: grid;
+    place-items: center;
+    border-radius: 50%;
+    text-decoration: none;
 }
 
 .flecha:hover {

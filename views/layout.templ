@@ -1,0 +1,33 @@
+package views
+
+templ Layout(titulo string, usuario *Usuario) {
+	<!DOCTYPE html>
+	<html lang="es">
+		<head>
+			<meta charset="UTF-8"/>
+			<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+			<title>{ titulo } · TuAlquiler</title>
+			<link rel="icon" href="/static/logo.svg" type="image/svg+xml"/>
+			<link rel="stylesheet" href="/static/styles.css"/>
+		</head>
+		<body>
+			<header class="barra">
+				<a class="marca" href="/">
+					<img src="/static/logo.svg" alt="" width="34" height="34"/>
+					TuAlquiler
+				</a>
+				<div class="sesion">
+					if usuario != nil {
+						<span class="saludo">Hola, { usuario.Nombre }</span>
+						<form method="post" action="/logout">
+							<button type="submit" class="btn-secundario">Cerrar sesión</button>
+						</form>
+					} else {
+						<a class="boton" href="/login">Ingresar</a>
+					}
+				</div>
+			</header>
+			{ children... }
+		</body>
+	</html>
+}

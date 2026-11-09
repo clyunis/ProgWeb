@@ -1,0 +1,24 @@
+package views
+
+import db "tp5/db/sqlc"
+
+templ IndexPage(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Imagen, ciudades []db.Ciudad, form FormPublicacion, usuario *Usuario) {
+	@Layout("Encontrá tu lugar", usuario) {
+		<section class="hero">
+			<h1>Encontrá tu lugar.</h1>
+			<p>Departamentos, casas y habitaciones en alquiler, publicados por sus dueños.</p>
+			if usuario != nil {
+				@PublicacionForm(ciudades, form)
+			} else {
+				<a class="btn-grande" href="/login">¿Tenés algo para alquilar? Ingresá y publicalo</a>
+			}
+		</section>
+		<main class="contenido">
+			<div class="encabezado-lista">
+				<h2>Publicaciones</h2>
+				<span class="contador">{ textoContador(len(pubs)) }</span>
+			</div>
+			@PublicacionList(pubs, fotos, usuario)
+		</main>
+	}
+}

@@ -1,8 +1,8 @@
-package main
+package handlers
 
 import (
+	"context"
 	"crypto/rand"
-	"database/sql"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	db "tp4/db/sqlc"
+	db "tp5/db/sqlc"
 )
 
 // Las imágenes subidas se guardan en disco, en esta carpeta, y se sirven en /uploads/.
@@ -35,9 +35,9 @@ var extensionesPermitidas = map[string]string{
 	"image/gif":  ".gif",
 }
 
-// uploadsHandler sirve los archivos subidos (como en la clase de archivos estáticos:
-// FileServer + StripPrefix), pero sin listar el contenido de la carpeta.
-func uploadsHandler() http.Handler {
+// Uploads sirve los archivos subidos (FileServer + StripPrefix, como en la filmina
+// de archivos estáticos), pero sin permitir listar el contenido de la carpeta.
+func Uploads() http.Handler {
 	fs := http.StripPrefix(prefijoURLUploads, http.FileServer(http.Dir(directorioUploads)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.HasSuffix(r.URL.Path, "/") {
@@ -49,58 +49,21 @@ func uploadsHandler() http.Handler {
 	})
 }
 
-// POST /publicaciones/{id}/imagenes (multipart/form-data, campo "imagenes", uno o más archivos).
-// Solo el dueño de la publicación puede subirle imágenes.
-func subirImagenes(w http.ResponseWriter, r *http.Request, idAlquiler int32) {
-	ctx := r.Context()
-
-	pub, err := queries.GetPublicacion(ctx, idAlquiler)
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			escribirError(w, http.StatusNotFound, "Publicación no encontrada")
-			return
-		}
-		escribirError(w, http.StatusInternalServerError, "Error al consultar la base de datos")
-		return
-	}
-	if pub.IDUsuario != usuarioActual(r).IDUsuario {
-		escribirError(w, http.StatusForbidden, "Solo podés agregar imágenes a tus propias publicaciones")
-		return
-	}
-
-	// Limitamos el tamaño total del cuerpo antes de leerlo
-	r.Body = http.MaxBytesReader(w, r.Body, maxImagenesPorEnvio*maxTamanioImagen+(1<<20))
-	if err := r.ParseMultipartForm(8 << 20); err != nil {
-		var errTamanio *http.MaxBytesError
-		if errors.As(err, &errTamanio) {
-			escribirError(w, http.StatusRequestEntityTooLarge, "Las imágenes superan el tamaño máximo permitido")
-			return
-		}
-		escribirError(w, http.StatusBadRequest, "Se esperaba un formulario multipart con imágenes")
-		return
-	}
-	defer r.MultipartForm.RemoveAll()
-
-	archivos := r.MultipartForm.File["imagenes"]
-	if len(archivos) == 0 {
-		escribirError(w, http.StatusBadRequest, "No se envió ninguna imagen (campo \"imagenes\")")
-		return
-	}
+// guardarImagenes guarda los archivos en disco y los registra en la tabla IMAGEN
+// asociados a la publicación. Guarda todas o ninguna: si una falla, deshace lo hecho.
+// Lo usa el handler del formulario de publicar (paso 4).
+func (h *Handler) guardarImagenes(ctx context.Context, idAlquiler int32, archivos []*multipart.FileHeader) error {
 	if len(archivos) > maxImagenesPorEnvio {
-		escribirError(w, http.StatusBadRequest, fmt.Sprintf("Podés subir hasta %d imágenes", maxImagenesPorEnvio))
-		return
+		return fmt.Errorf("podés subir hasta %d imágenes", maxImagenesPorEnvio)
 	}
-
 	if err := os.MkdirAll(directorioUploads, 0o755); err != nil {
-		escribirError(w, http.StatusInternalServerError, "No se pudo preparar el almacenamiento")
-		return
+		return errors.New("no se pudo preparar el almacenamiento")
 	}
 
-	// Guardamos todas o ninguna: si una falla, borramos lo que ya se guardó.
 	var guardadas []db.Imagen
 	deshacer := func() {
 		for _, img := range guardadas {
-			queries.DeleteImagen(ctx, img.IDImagen)
+			h.queries.DeleteImagen(ctx, img.IDImagen)
 		}
 		borrarArchivosSubidos(guardadas)
 	}
@@ -109,21 +72,18 @@ func subirImagenes(w http.ResponseWriter, r *http.Request, idAlquiler int32) {
 		url, err := guardarArchivo(archivo)
 		if err != nil {
 			deshacer()
-			escribirError(w, http.StatusBadRequest, fmt.Sprintf("%s: %v", archivo.Filename, err))
-			return
+			return fmt.Errorf("%s: %v", archivo.Filename, err)
 		}
 
-		id, err := queries.CreateImagen(ctx, db.CreateImagenParams{IDAlquiler: idAlquiler, Url: url})
+		id, err := h.queries.CreateImagen(ctx, db.CreateImagenParams{IDAlquiler: idAlquiler, Url: url})
 		if err != nil {
 			borrarArchivosSubidos([]db.Imagen{{Url: url}})
 			deshacer()
-			escribirError(w, http.StatusInternalServerError, "Error al guardar la imagen en la base de datos")
-			return
+			return errors.New("no se pudo guardar la imagen en la base de datos")
 		}
 		guardadas = append(guardadas, db.Imagen{IDImagen: id, IDAlquiler: idAlquiler, Url: url})
 	}
-
-	escribirJSON(w, http.StatusCreated, guardadas)
+	return nil
 }
 
 // guardarArchivo valida el archivo y lo copia a la carpeta de uploads con un nombre aleatorio.

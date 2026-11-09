@@ -1,0 +1,101 @@
+package views
+
+import db "tp5/db/sqlc"
+
+templ PublicacionPage(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int, contacto db.GetContactoPublicacionRow, usuario *Usuario) {
+	@Layout(pub.Titulo, usuario) {
+		<main class="detalle">
+			<a class="volver" href="/">← Volver a las publicaciones</a>
+			<header class="encabezado-detalle">
+				<p class="ubicacion">📍 { pub.Ciudad }, { pub.Provincia }</p>
+				<h1>{ pub.Titulo }</h1>
+				<p class="direccion">{ pub.DireccionCalle } { pub.NumeroCalle }, { pub.Ciudad }</p>
+			</header>
+			<div class="layout-detalle">
+				<div class="columna-principal">
+					@galeria(pub, fotos, actual)
+					<section class="bloque">
+						<h2>Descripción</h2>
+						<p class="texto-largo">{ pub.Descripcion }</p>
+					</section>
+					<section class="bloque">
+						<h2>Ubicación</h2>
+						<dl class="datos-ubicacion">
+							<dt>Dirección</dt>
+							<dd>{ pub.DireccionCalle } { pub.NumeroCalle }</dd>
+							<dt>Ciudad</dt>
+							<dd>{ pub.Ciudad }</dd>
+							<dt>Provincia</dt>
+							<dd>{ pub.Provincia }</dd>
+						</dl>
+					</section>
+				</div>
+				@tarjetaContacto(pub, contacto, usuario)
+			</div>
+		</main>
+	}
+}
+
+templ galeria(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int) {
+	<section class="galeria-detalle">
+		if len(fotos) == 0 {
+			<div class="sin-foto">Esta publicación no tiene fotos</div>
+		} else {
+			<div class="visor">
+				<a href={ templ.URL(fotos[actual].Url) } target="_blank" rel="noopener">
+					<img class="foto-principal" src={ fotos[actual].Url } alt={ pub.Titulo }/>
+				</a>
+				if len(fotos) > 1 {
+					<a class="flecha anterior" href={ templ.URL(urlFoto(pub.IDAlquiler, actual-1, len(fotos))) } aria-label="Foto anterior">‹</a>
+					<a class="flecha siguiente" href={ templ.URL(urlFoto(pub.IDAlquiler, actual+1, len(fotos))) } aria-label="Foto siguiente">›</a>
+					<span class="contador-fotos">{ textoFoto(actual, len(fotos)) }</span>
+				}
+			</div>
+			if len(fotos) > 1 {
+				<div class="tira-miniaturas">
+					for i, foto := range fotos {
+						<a
+							class={ "miniatura", templ.KV("activa", i == actual) }
+							href={ templ.URL(urlFoto(pub.IDAlquiler, i, len(fotos))) }
+							aria-label={ "Ver foto " + textoFoto(i, len(fotos)) }
+						>
+							<img src={ foto.Url } alt=""/>
+						</a>
+					}
+				</div>
+			}
+		}
+	</section>
+}
+
+templ tarjetaContacto(pub db.GetPublicacionDetalleRow, contacto db.GetContactoPublicacionRow, usuario *Usuario) {
+	<aside class="contacto">
+		<h2>Contactá al dueño</h2>
+		<div class="persona">
+			<span class="avatar">{ iniciales(contacto.Nombre, contacto.Apellido) }</span>
+			<span class="nombre-dueno">{ contacto.Nombre } { contacto.Apellido }</span>
+		</div>
+		<div class="datos-contacto">
+			if usuario != nil && usuario.ID == pub.IDUsuario {
+				<p class="nota">Esta es tu publicación.</p>
+				@BotonEliminar(pub.IDAlquiler)
+			} else {
+				<a class="dato" href={ templ.URL("mailto:" + contacto.Email) }>✉️ { contacto.Email }</a>
+				<a class="dato" href={ templ.URL(urlTelefono(contacto.Telefono)) }>📞 { contacto.Telefono }</a>
+				<a class="boton boton-ancho" href={ templ.URL(urlConsulta(contacto.Email, pub.Titulo)) }>Enviar un email</a>
+			}
+		</div>
+	</aside>
+}
+
+templ NoEncontradaPage(usuario *Usuario) {
+	@Layout("Publicación no encontrada", usuario) {
+		<main class="detalle">
+			<div class="aviso">
+				<h1>Publicación no encontrada</h1>
+				<p>Puede que el dueño la haya eliminado.</p>
+				<a class="boton" href="/">Ver todas las publicaciones</a>
+			</div>
+		</main>
+	}
+}

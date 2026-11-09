@@ -1,0 +1,52 @@
+package views
+
+import db "tp5/db/sqlc"
+
+templ PublicacionList(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Imagen, usuario *Usuario) {
+	if len(pubs) == 0 {
+		<p class="vacio">Todavía no hay publicaciones. ¡Sé la primera persona en publicar!</p>
+	} else {
+		<ul class="grilla">
+			for _, pub := range pubs {
+				@tarjeta(pub, fotos[pub.IDAlquiler], usuario)
+			}
+		</ul>
+	}
+}
+
+templ tarjeta(pub db.ListPublicacionesRow, fotos []db.Imagen, usuario *Usuario) {
+	<li class="tarjeta">
+		<div class="galeria">
+			if len(fotos) > 0 {
+				<img class="portada" src={ fotos[0].Url } alt={ pub.Titulo } loading="lazy"/>
+				if len(fotos) > 1 {
+					<span class="cantidad-fotos">📷 { len(fotos) }</span>
+				}
+			} else {
+				<div class="sin-foto">Sin fotos</div>
+			}
+		</div>
+		<div class="cuerpo">
+			<p class="ubicacion">📍 { pub.Ciudad }, { pub.Provincia }</p>
+			<h3>
+				<a class="enlace-tarjeta" href={ templ.URL(urlPropiedad(pub.IDAlquiler)) }>{ pub.Titulo }</a>
+			</h3>
+			<p class="direccion">{ pub.DireccionCalle } { pub.NumeroCalle }</p>
+			<p class="descripcion">{ pub.Descripcion }</p>
+			<div class="pie">
+				if usuario != nil && usuario.ID == pub.IDUsuario {
+					<span class="autor">Publicado por vos</span>
+					@BotonEliminar(pub.IDAlquiler)
+				} else {
+					<span class="autor">Publicado por { pub.AutorNombre } { pub.AutorApellido }</span>
+				}
+			</div>
+		</div>
+	</li>
+}
+
+templ BotonEliminar(id int32) {
+	<form method="post" action={ templ.URL(urlEliminar(id)) } class="form-eliminar">
+		<button type="submit" class="btn-eliminar">Eliminar</button>
+	</form>
+}

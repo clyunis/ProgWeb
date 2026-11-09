@@ -1,0 +1,78 @@
+package views
+
+templ pestanias(activa string) {
+	<nav class="pestanias">
+		<a class={ "pestania", templ.KV("activa", activa == "login") } href="/login">Ingresar</a>
+		<a class={ "pestania", templ.KV("activa", activa == "registro") } href="/registro">Crear cuenta</a>
+	</nav>
+}
+
+templ LoginPage(form FormLogin) {
+	@Layout("Ingresar", nil) {
+		<main class="contenedor-login">
+			<section class="panel caja-login">
+				<p class="lema">Encontrá tu lugar.</p>
+				@pestanias("login")
+				<form method="post" action="/login" class="formulario">
+					if form.Error != "" {
+						<p class="mensaje error" role="alert">{ form.Error }</p>
+					}
+					<label>
+						Email
+						<input type="email" name="email" required autocomplete="username" value={ form.Email }/>
+					</label>
+					<label>
+						Contraseña
+						<input type="password" name="password" required autocomplete="current-password"/>
+					</label>
+					<button type="submit">Ingresar</button>
+				</form>
+			</section>
+		</main>
+	}
+}
+
+templ RegistroPage(form FormRegistro) {
+	@Layout("Crear cuenta", nil) {
+		<main class="contenedor-login">
+			<section class="panel caja-login">
+				<p class="lema">Encontrá tu lugar.</p>
+				@pestanias("registro")
+				<form method="post" action="/registro" class="formulario">
+					if form.Error != "" {
+						<p class="mensaje error" role="alert">{ form.Error }</p>
+					}
+					<div class="fila">
+						<label class="crece">
+							Nombre
+							<input type="text" name="nombre" required maxlength="100" value={ form.Nombre }/>
+						</label>
+						<label class="crece">
+							Apellido
+							<input type="text" name="apellido" required maxlength="100" value={ form.Apellido }/>
+						</label>
+					</div>
+					<div class="fila">
+						<label class="crece">
+							DNI
+							<input type="text" name="dni" required maxlength="9" inputmode="numeric" value={ form.Dni }/>
+						</label>
+						<label class="crece">
+							Teléfono
+							<input type="tel" name="telefono" required maxlength="20" value={ form.Telefono }/>
+						</label>
+					</div>
+					<label>
+						Email
+						<input type="email" name="email" required maxlength="100" autocomplete="username" value={ form.Email }/>
+					</label>
+					<label>
+						Contraseña
+						<input type="password" name="password" required minlength="6" autocomplete="new-password"/>
+					</label>
+					<button type="submit">Crear cuenta</button>
+				</form>
+			</section>
+		</main>
+	}
+}
