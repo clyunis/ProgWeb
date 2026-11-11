@@ -10,8 +10,6 @@ import (
 	"tp5/views"
 )
 
-// GET /propiedad/{id}?foto={n} : página de detalle de una publicación.
-// El parámetro foto indica cuál foto se ve grande (la galería funciona con links, sin JS).
 func (h *Handler) Propiedad(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
@@ -49,7 +47,6 @@ func (h *Handler) Propiedad(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Qué foto mostrar grande: ?foto=n. Si falta o es inválido, la primera.
 	actual, err := strconv.Atoi(r.URL.Query().Get("foto"))
 	if err != nil || actual < 0 || actual >= len(fotos) {
 		actual = 0

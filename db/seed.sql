@@ -1,5 +1,3 @@
--- Datos iniciales: ciudades disponibles para publicar.
--- Se cargan una sola vez, cuando Docker crea la base (después del schema).
 INSERT INTO CIUDAD (nombre, provincia) VALUES
     ('Tandil', 'Buenos Aires'),
     ('Mar del Plata', 'Buenos Aires'),

@@ -17,17 +17,13 @@ import (
 	db "tp5/db/sqlc"
 )
 
-// Las imágenes subidas se guardan en disco, en esta carpeta, y se sirven en /uploads/.
-// En la tabla IMAGEN guardamos solo la URL (ej. "/uploads/3f9a...c1.jpg").
 const (
 	directorioUploads   = "uploads"
 	prefijoURLUploads   = "/uploads/"
-	maxTamanioImagen    = 5 << 20 // 5 MB por imagen
+	maxTamanioImagen    = 5 << 20
 	maxImagenesPorEnvio = 8
 )
 
-// Tipos de imagen aceptados y la extensión con la que se guardan.
-// El tipo se detecta leyendo el contenido del archivo, no confiando en su nombre.
 var extensionesPermitidas = map[string]string{
 	"image/jpeg": ".jpg",
 	"image/png":  ".png",
@@ -35,8 +31,6 @@ var extensionesPermitidas = map[string]string{
 	"image/gif":  ".gif",
 }
 
-// Uploads sirve los archivos subidos (FileServer + StripPrefix, como en la filmina
-// de archivos estáticos), pero sin permitir listar el contenido de la carpeta.
 func Uploads() http.Handler {
 	fs := http.StripPrefix(prefijoURLUploads, http.FileServer(http.Dir(directorioUploads)))
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -49,9 +43,6 @@ func Uploads() http.Handler {
 	})
 }
 
-// guardarImagenes guarda los archivos en disco y los registra en la tabla IMAGEN
-// asociados a la publicación. Guarda todas o ninguna: si una falla, deshace lo hecho.
-// Lo usa el handler del formulario de publicar (paso 4).
 func (h *Handler) guardarImagenes(ctx context.Context, idAlquiler int32, archivos []*multipart.FileHeader) error {
 	if len(archivos) > maxImagenesPorEnvio {
 		return fmt.Errorf("podés subir hasta %d imágenes", maxImagenesPorEnvio)
@@ -86,8 +77,6 @@ func (h *Handler) guardarImagenes(ctx context.Context, idAlquiler int32, archivo
 	return nil
 }
 
-// guardarArchivo valida el archivo y lo copia a la carpeta de uploads con un nombre aleatorio.
-// Devuelve la URL pública.
 func guardarArchivo(fh *multipart.FileHeader) (string, error) {
 	if fh.Size > maxTamanioImagen {
 		return "", fmt.Errorf("supera los %d MB", maxTamanioImagen>>20)
@@ -99,7 +88,6 @@ func guardarArchivo(fh *multipart.FileHeader) (string, error) {
 	}
 	defer origen.Close()
 
-	// Detectamos el tipo real a partir de los primeros bytes
 	cabecera := make([]byte, 512)
 	n, _ := io.ReadFull(origen, cabecera)
 	ext, ok := extensionesPermitidas[http.DetectContentType(cabecera[:n])]
@@ -110,7 +98,6 @@ func guardarArchivo(fh *multipart.FileHeader) (string, error) {
 		return "", errors.New("no se pudo leer el archivo")
 	}
 
-	// Nombre aleatorio: evita choques y que el usuario elija rutas (ej. "../../main.go")
 	aleatorio := make([]byte, 16)
 	rand.Read(aleatorio)
 	nombre := hex.EncodeToString(aleatorio) + ext
@@ -128,14 +115,12 @@ func guardarArchivo(fh *multipart.FileHeader) (string, error) {
 	return prefijoURLUploads + nombre, nil
 }
 
-// borrarArchivosSubidos elimina del disco los archivos de imágenes subidas.
-// Las imágenes cargadas como URL externa (ej. https://...) se ignoran.
 func borrarArchivosSubidos(imagenes []db.Imagen) {
 	for _, img := range imagenes {
 		if !strings.HasPrefix(img.Url, prefijoURLUploads) {
 			continue
 		}
-		nombre := filepath.Base(img.Url) // solo el nombre, nunca una ruta
+		nombre := filepath.Base(img.Url)
 		if err := os.Remove(filepath.Join(directorioUploads, nombre)); err != nil && !os.IsNotExist(err) {
 			log.Println("No se pudo borrar", nombre, err)
 		}

@@ -23,17 +23,11 @@ db-down:
 run: build db-up
 	./tmp/$(APP_NAME)
 
-# Corre los tests sobre una base limpia: borra la base, la levanta vacía,
-# arranca el servidor, ejecuta requests.hurl y apaga el servidor.
-test: build
-	docker compose down -v
-	rm -rf uploads
-	$(MAKE) db-up
-	@./tmp/$(APP_NAME) & echo $$! > tmp/server.pid; \
-	until curl -s -o /dev/null http://localhost:8080/; do sleep 0.5; done; \
-	hurl --test requests.hurl; resultado=$$?; \
-	kill $$(cat tmp/server.pid); rm -f tmp/server.pid; \
-	exit $$resultado
+# Todo en un solo comando: genera, compila, levanta una base vacía, arranca el
+# servidor, corre los tests y limpia (servidor, base y fotos), aunque algo falle
+# o se interrumpa con Ctrl+C. Ver scripts/test.sh.
+test:
+	@bash scripts/test.sh
 
 # Corre los tests contra un servidor que ya está corriendo (necesita la base vacía)
 hurl:

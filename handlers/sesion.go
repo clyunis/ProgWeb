@@ -14,11 +14,10 @@ import (
 	"tp5/views"
 )
 
-// /login : GET muestra el formulario, POST inicia sesión.
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		// Si ya hay sesión, no tiene sentido mostrar el login
+
 		if h.usuarioActual(r) != nil {
 			http.Redirect(w, r, "/", http.StatusSeeOther)
 			return
@@ -31,7 +30,6 @@ func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// POST /login : valida email y contraseña, pone la cookie con el token y redirige a "/".
 func (h *Handler) iniciarSesion(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Formulario inválido", http.StatusBadRequest)
@@ -51,8 +49,7 @@ func (h *Handler) iniciarSesion(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error al consultar la base de datos", http.StatusInternalServerError)
 		return
 	}
-	// Mismo mensaje si el email no existe o si la contraseña está mal,
-	// para no revelar qué emails están registrados.
+
 	if errors.Is(err, sql.ErrNoRows) || !passwordCorrecta(usuario.Password, password) {
 		form.Error = "Email o contraseña incorrectos."
 		render(w, r, http.StatusUnauthorized, views.LoginPage(form))
@@ -66,7 +63,6 @@ func (h *Handler) iniciarSesion(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// /registro : GET muestra el formulario, POST crea la cuenta.
 func (h *Handler) Registro(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
@@ -82,7 +78,6 @@ func (h *Handler) Registro(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-// POST /registro : crea el usuario con la contraseña hasheada, inicia sesión y redirige a "/".
 func (h *Handler) crearCuenta(w http.ResponseWriter, r *http.Request) {
 	if err := r.ParseForm(); err != nil {
 		http.Error(w, "Formulario inválido", http.StatusBadRequest)
@@ -97,7 +92,6 @@ func (h *Handler) crearCuenta(w http.ResponseWriter, r *http.Request) {
 	}
 	password := r.FormValue("password")
 
-	// Los límites coinciden con los VARCHAR de la tabla USERS
 	switch {
 	case form.Nombre == "" || form.Apellido == "" || form.Dni == "" || form.Telefono == "" || form.Email == "":
 		form.Error = "Completá todos los campos."
@@ -117,7 +111,6 @@ func (h *Handler) crearCuenta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Guardamos el hash bcrypt, nunca la contraseña en texto plano
 	hash, err := hashearPassword(password)
 	if err != nil {
 		http.Error(w, "Error al procesar la contraseña", http.StatusInternalServerError)
@@ -133,7 +126,7 @@ func (h *Handler) crearCuenta(w http.ResponseWriter, r *http.Request) {
 		Password: hash,
 	})
 	if err != nil {
-		// 23505 = unique_violation: ya existe un usuario con ese email o DNI
+
 		var errPg *pq.Error
 		if errors.As(err, &errPg) && errPg.Code == "23505" {
 			form.Error = "Ya hay una cuenta con ese email o DNI."
@@ -145,7 +138,6 @@ func (h *Handler) crearCuenta(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Al crear la cuenta, la sesión queda iniciada
 	if err := emitirToken(w, id, form.Email); err != nil {
 		http.Error(w, "No se pudo iniciar sesión", http.StatusInternalServerError)
 		return
@@ -153,7 +145,6 @@ func (h *Handler) crearCuenta(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// POST /logout : borra la cookie y vuelve a la página principal.
 func (h *Handler) Logout(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)

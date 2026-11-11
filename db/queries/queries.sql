@@ -10,7 +10,6 @@ SELECT id_usuario, nombre, apellido, dni, email, telefono, fecha_registro
 FROM USERS
 ORDER BY apellido, nombre;
 
--- Usada por el login: es la única query que devuelve el hash de la contraseña.
 -- name: GetUserByEmail :one
 SELECT id_usuario, nombre, apellido, email, password
 FROM USERS
@@ -37,7 +36,6 @@ SELECT id_alquiler, titulo, descripcion, id_usuario, direccion_calle, numero_cal
 FROM PUBLICACION 
 WHERE id_alquiler = $1;
 
--- Para la página de detalle: la publicación con el nombre del autor y de la ciudad
 -- name: GetPublicacionDetalle :one
 SELECT p.id_alquiler, p.titulo, p.descripcion, p.id_usuario, p.direccion_calle, p.numero_calle, p.id_ciudad,
        u.nombre AS autor_nombre, u.apellido AS autor_apellido,
@@ -47,15 +45,12 @@ JOIN USERS u ON u.id_usuario = p.id_usuario
 JOIN CIUDAD c ON c.id_ciudad = p.id_ciudad
 WHERE p.id_alquiler = $1;
 
--- Datos de contacto del dueño de una publicación (solo para usuarios con sesión)
 -- name: GetContactoPublicacion :one
 SELECT u.nombre, u.apellido, u.email, u.telefono
 FROM PUBLICACION p
 JOIN USERS u ON u.id_usuario = p.id_usuario
 WHERE p.id_alquiler = $1;
 
--- Incluye el nombre del autor y de la ciudad para que la página pública no
--- tenga que pedir GET /users (que expone datos personales) ni GET /ciudades.
 -- name: ListPublicaciones :many
 SELECT p.id_alquiler, p.titulo, p.descripcion, p.id_usuario, p.direccion_calle, p.numero_calle, p.id_ciudad,
        u.nombre AS autor_nombre, u.apellido AS autor_apellido,
@@ -98,14 +93,11 @@ FROM IMAGEN
 WHERE id_alquiler = $1 
 ORDER BY id_imagen ASC;
 
--- Todas las imágenes (la página principal las agrupa por publicación)
 -- name: ListImagenes :many
 SELECT id_imagen, id_alquiler, url
 FROM IMAGEN
 ORDER BY id_alquiler, id_imagen;
 
--- Imágenes de todas las publicaciones de un usuario (para borrar los archivos
--- cuando se elimina la cuenta, ya que el ON DELETE CASCADE solo borra las filas)
 -- name: ListImagenesByUsuario :many
 SELECT i.id_imagen, i.id_alquiler, i.url
 FROM IMAGEN i
