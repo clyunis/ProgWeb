@@ -60,6 +60,9 @@ JOIN USERS u ON u.id_usuario = p.id_usuario
 JOIN CIUDAD c ON c.id_ciudad = p.id_ciudad
 ORDER BY p.id_alquiler DESC;
 
+-- name: CountPublicaciones :one
+SELECT count(*) FROM PUBLICACION;
+
 -- name: ListPublicacionesByCiudad :many
 SELECT id_alquiler, titulo, descripcion, id_usuario, direccion_calle, numero_calle, id_ciudad 
 FROM PUBLICACION 

@@ -44,6 +44,10 @@ func urlEliminar(id int32) string {
 	return fmt.Sprintf("/publicaciones/%d/eliminar", id)
 }
 
+func urlPublicacion(id int32) string {
+	return fmt.Sprintf("/publicaciones/%d", id)
+}
+
 func textoContador(n int) string {
 	if n == 1 {
 		return "1 propiedad"

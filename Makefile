@@ -20,8 +20,8 @@ db-down:
 	docker compose down -v
 	rm -rf uploads
 
-run: build db-up
-	./tmp/$(APP_NAME)
+run:
+	@bash scripts/run.sh
 
 # Todo en un solo comando: genera, compila, levanta una base vacía, arranca el
 # servidor, corre los tests y limpia (servidor, base y fotos), aunque algo falle

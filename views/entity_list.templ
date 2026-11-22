@@ -3,15 +3,25 @@ package views
 import db "tp5/db/sqlc"
 
 templ PublicacionList(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Imagen, usuario *Usuario) {
-	if len(pubs) == 0 {
-		<p class="vacio">Todavía no hay publicaciones. ¡Sé la primera persona en publicar!</p>
-	} else {
-		<ul class="grilla">
-			for _, pub := range pubs {
-				@tarjeta(pub, fotos[pub.IDAlquiler], usuario)
-			}
-		</ul>
-	}
+	<div id="lista-publicaciones">
+		if len(pubs) == 0 {
+			<p class="vacio">Todavía no hay publicaciones. ¡Sé la primera persona en publicar!</p>
+		} else {
+			<ul class="grilla">
+				for _, pub := range pubs {
+					@tarjeta(pub, fotos[pub.IDAlquiler], usuario)
+				}
+			</ul>
+		}
+	</div>
+}
+
+templ Contador(n int) {
+	<span id="contador" class="contador">{ textoContador(n) }</span>
+}
+
+templ ContadorOOB(n int) {
+	<span id="contador" class="contador" hx-swap-oob="true">{ textoContador(n) }</span>
 }
 
 templ tarjeta(pub db.ListPublicacionesRow, fotos []db.Imagen, usuario *Usuario) {
@@ -36,13 +46,27 @@ templ tarjeta(pub db.ListPublicacionesRow, fotos []db.Imagen, usuario *Usuario) 
 			<div class="pie">
 				if usuario != nil && usuario.ID == pub.IDUsuario {
 					<span class="autor">Publicado por vos</span>
-					@BotonEliminar(pub.IDAlquiler)
+					@BotonEliminarTarjeta(pub.IDAlquiler)
 				} else {
 					<span class="autor">Publicado por { pub.AutorNombre } { pub.AutorApellido }</span>
 				}
 			</div>
 		</div>
 	</li>
+}
+
+templ BotonEliminarTarjeta(id int32) {
+	<form
+		method="post"
+		action={ templ.URL(urlEliminar(id)) }
+		class="form-eliminar"
+		hx-delete={ urlPublicacion(id) }
+		hx-target="closest li"
+		hx-swap="outerHTML swap:400ms"
+		hx-confirm="¿Estás seguro? La publicación se va a eliminar junto con sus fotos."
+	>
+		<button type="submit" class="btn-eliminar">Eliminar</button>
+	</form>
 }
 
 templ BotonEliminar(id int32) {

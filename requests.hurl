@@ -1,4 +1,3 @@
-# Tests de TuAlquiler (TP5: páginas renderizadas en el servidor con templ).
 # Se corren con "make test", que arranca todo sobre una base vacía.
 # Hurl guarda las cookies entre pedidos, como un navegador: después de
 # ingresar, los pedidos siguientes viajan con la cookie "token".
@@ -9,7 +8,7 @@
 # PÁGINA PRINCIPAL SIN SESIÓN
 # ==========================================================
 
-# 1. La página llega completa desde el servidor, sin JavaScript
+# 1. La página llega completa desde el servidor, con HTMX cargado en el <head>
 GET http://localhost:8080/
 HTTP 200
 [Asserts]
@@ -18,7 +17,8 @@ body contains "TuAlquiler"
 body contains "Todavía no hay publicaciones"
 body contains "Ingresá y publicalo"
 body not contains "action=\"/publicaciones\""
-body not contains "<script"
+body contains "<script src=\"https://unpkg.com/htmx.org@1.9.10\"></script>"
+body contains "id=\"lista-publicaciones\""
 
 # 2. Archivos estáticos
 GET http://localhost:8080/static/styles.css
@@ -31,6 +31,17 @@ titulo: Algo
 HTTP 303
 [Asserts]
 header "Location" == "/login"
+
+# 4. Lo mismo desde HTMX: en vez de un 303, pide navegar con HX-Redirect
+# (si no, el login entero terminaría metido adentro de la lista)
+POST http://localhost:8080/publicaciones
+HX-Request: true
+[MultipartFormData]
+titulo: Algo
+HTTP 200
+[Asserts]
+header "HX-Redirect" == "/login"
+header "Location" not exists
 
 
 # ==========================================================
@@ -149,6 +160,62 @@ HTTP 404
 
 
 # ==========================================================
+# PUBLICAR CON HTMX (sin recargar la página)
+# ==========================================================
+
+# 1. Con un error, devuelve solo el formulario con el mensaje, y le indica a
+#    HTMX que lo ponga en lugar del formulario (no de la lista)
+POST http://localhost:8080/publicaciones
+HX-Request: true
+[MultipartFormData]
+titulo:
+descripcion: Casa con patio
+direccion_calle: Belgrano
+numero_calle: 500
+id_ciudad: 1
+HTTP 200
+[Asserts]
+header "HX-Retarget" == "#form-publicar"
+header "HX-Reswap" == "outerHTML"
+body contains "Completá todos los campos."
+body contains "value=\"Belgrano\""
+body not contains "<html"
+body not contains "lista-publicaciones\">"
+
+# 2. Publicación correcta: sin redirección, devuelve la lista actualizada,
+#    el formulario vacío (out-of-band) y el contador nuevo (out-of-band)
+POST http://localhost:8080/publicaciones
+HX-Request: true
+[MultipartFormData]
+titulo: Casa con patio
+descripcion: 3 ambientes, patio y parrilla
+direccion_calle: Belgrano
+numero_calle: 500
+id_ciudad: 1
+HTTP 200
+[Captures]
+id_casa: regex /href="\/propiedad\/(\d+)"/
+[Asserts]
+header "Location" not exists
+body not contains "<html"
+body contains "<div id=\"lista-publicaciones\">"
+body contains "Casa con patio"
+body contains "Departamento céntrico"
+body contains "<div id=\"form-publicar\" hx-swap-oob=\"true\">"
+body not contains "value=\"Belgrano\""
+body contains "<span id=\"contador\" class=\"contador\" hx-swap-oob=\"true\">2 propiedades</span>"
+
+# 3. Cada tarjeta propia tiene el botón para eliminarla con HTMX
+GET http://localhost:8080/
+HTTP 200
+[Asserts]
+body contains "hx-delete=\"/publicaciones/{{id_casa}}\""
+body contains "hx-target=\"closest li\""
+body contains "hx-confirm=\"¿Estás seguro?"
+body contains "2 propiedades"
+
+
+# ==========================================================
 # PÁGINA DE CADA PUBLICACIÓN
 # ==========================================================
 
@@ -230,7 +297,12 @@ body not contains "/eliminar"
 POST http://localhost:8080/publicaciones/{{id_pub}}/eliminar
 HTTP 403
 
-# 4. No se puede registrar otra cuenta con el mismo email
+# 4. Tampoco con el DELETE de HTMX
+DELETE http://localhost:8080/publicaciones/{{id_casa}}
+HX-Request: true
+HTTP 403
+
+# 5. No se puede registrar otra cuenta con el mismo email
 POST http://localhost:8080/registro
 [FormParams]
 nombre: Otra
@@ -243,7 +315,7 @@ HTTP 409
 [Asserts]
 body contains "Ya hay una cuenta con ese email o DNI."
 
-# 5. Beto cierra sesión
+# 6. Beto cierra sesión
 POST http://localhost:8080/logout
 HTTP 303
 
@@ -262,20 +334,76 @@ HTTP 303
 header "Location" == "/"
 cookie "token" exists
 
-# 2. Eliminar solo funciona con POST
+# 2. Eliminar con HTMX (DELETE): responde 200 sin nada para poner en lugar
+#    de la tarjeta (así desaparece); solo viaja el contador, out-of-band
+DELETE http://localhost:8080/publicaciones/{{id_casa}}
+HX-Request: true
+HTTP 200
+[Asserts]
+body == "<span id=\"contador\" class=\"contador\" hx-swap-oob=\"true\">1 propiedad</span>"
+
+# 3. Ya no existe
+GET http://localhost:8080/propiedad/{{id_casa}}
+HTTP 404
+
+# 4. Borrarla de nuevo: no existe
+DELETE http://localhost:8080/publicaciones/{{id_casa}}
+HX-Request: true
+HTTP 404
+
+# 5. Un id que no es un número
+DELETE http://localhost:8080/publicaciones/abc
+HX-Request: true
+HTTP 404
+
+# 6. El formulario clásico de eliminar solo funciona con POST
 GET http://localhost:8080/publicaciones/{{id_pub}}/eliminar
 HTTP 405
 
-# 3. Ana elimina su publicación
+# 7. Ana elimina la otra con el formulario clásico (sin HTMX): sigue redirigiendo
 POST http://localhost:8080/publicaciones/{{id_pub}}/eliminar
 HTTP 303
 [Asserts]
 header "Location" == "/"
 
-# 4. Ya no existe la publicación
+# 8. Ya no existe la publicación
 GET http://localhost:8080/propiedad/{{id_pub}}
 HTTP 404
 
-# 5. Y su foto también se borró del disco
+# 9. Y su foto también se borró del disco
 GET http://localhost:8080{{foto_url}}
 HTTP 404
+
+# 10. Ana publica una nueva con HTMX: es la única
+POST http://localhost:8080/publicaciones
+HX-Request: true
+[MultipartFormData]
+titulo: Monoambiente luminoso
+descripcion: Ideal para estudiantes
+direccion_calle: Mitre
+numero_calle: 100
+id_ciudad: 1
+HTTP 200
+[Captures]
+id_mono: regex /href="\/propiedad\/(\d+)"/
+[Asserts]
+body contains "1 propiedad<"
+
+# 11. Al eliminar la última con HTMX, reemplaza la lista entera por el mensaje de lista vacía
+DELETE http://localhost:8080/publicaciones/{{id_mono}}
+HX-Request: true
+HTTP 200
+[Asserts]
+header "HX-Retarget" == "#lista-publicaciones"
+header "HX-Reswap" == "outerHTML"
+body contains "<div id=\"lista-publicaciones\">"
+body contains "Todavía no hay publicaciones"
+body not contains "<li"
+body contains "<span id=\"contador\" class=\"contador\" hx-swap-oob=\"true\">0 propiedades</span>"
+
+# 12. La lista quedó vacía
+GET http://localhost:8080/
+HTTP 200
+[Asserts]
+body contains "Todavía no hay publicaciones"
+body contains "0 propiedades"

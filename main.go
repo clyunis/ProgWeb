@@ -34,6 +34,7 @@ func main() {
 	http.HandleFunc("/", h.Index)
 	http.HandleFunc("/publicaciones", h.Publicaciones)
 	http.HandleFunc("/publicaciones/", h.Publicaciones)
+	http.HandleFunc("DELETE /publicaciones/{id}", h.EliminarPublicacion)
 	http.HandleFunc("/propiedad/", h.Propiedad)
 
 	http.HandleFunc("/login", h.Login)

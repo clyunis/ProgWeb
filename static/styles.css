@@ -735,3 +735,8 @@ select:focus {
         width: auto;
     }
 }
+
+.tarjeta.htmx-swapping {
+    opacity: 0;
+    transition: opacity 0.4s ease-out;
+}

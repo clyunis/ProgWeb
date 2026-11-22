@@ -1,6 +1,8 @@
-# Trabajo Práctico 5: TuAlquiler
+# Trabajo Práctico 6
 
 **TuAlquiler** es una app de alquileres: cualquiera puede ver las propiedades publicadas, y quien tiene una cuenta puede publicar las suyas con fotos.
+
+En este TP la app del TP5 pasa a usar **HTMX**: publicar y eliminar ya no recargan la página, sino que el servidor devuelve solo los fragmentos de HTML que cambian y HTMX los reemplaza en su lugar. Todo sin escribir JavaScript.
 
 Integrantes: Valentin Tonelotto y Clara Yunis
 
@@ -20,16 +22,23 @@ Todos se ejecutan desde la raíz del proyecto.
 
 | Comando | Qué hace |
 |---|---|
-| `make run` | Levanta la app en `http://localhost:8080/` |
+| `make run` | Levanta la app en `http://localhost:8080/` y, al detenerla, deja todo limpio |
 | `make test` | Corre todas las pruebas y deja todo limpio |
-| `make db-down` | Baja la base de datos y borra los datos y las fotos |
+| `make db-down` | Baja la base de datos y borra los datos y las fotos (solo hace falta si algo quedó levantado a mano) |
 | `make clean` | Borra el programa compilado |
 
 ### `make run`: levantar la app
 
-Genera el código (sqlc y templ), compila, levanta la base de datos con Docker y arranca el servidor. La terminal queda ocupada mientras el servidor está corriendo.
+Hace el ciclo completo en un solo comando, en este orden:
 
-Después hay que abrir `http://localhost:8080/` en el navegador. Para terminar, se detiene el servidor con Ctrl+C y se baja la base con `make db-down`.
+1. Revisa que estén instaladas las herramientas y que el puerto 8080 esté libre (si está ocupado, avisa y no toca nada).
+2. Limpia lo que haya quedado de una ejecución anterior: baja la base y borra sus datos y las fotos subidas.
+3. Genera el código (sqlc y templ) y compila.
+4. Levanta una base de datos vacía con Docker y espera a que esté lista.
+5. Arranca el servidor. La terminal queda ocupada mientras está corriendo.
+6. Al detenerlo con Ctrl+C, o si el servidor o algún paso anterior falla, limpia siempre: apaga el servidor, baja la base y borra las fotos.
+
+Después del paso 5 hay que abrir `http://localhost:8080/` en el navegador. No hace falta correr `make db-down` al terminar. Como la base arranca vacía en cada ejecución, **los datos no se conservan entre un `make run` y el siguiente**. El detalle de cada paso está en `scripts/run.sh`.
 
 ### `make test`: correr las pruebas
 
@@ -42,7 +51,7 @@ Hace todo en un solo comando, en este orden:
 5. Corre las pruebas del archivo `requests.hurl`.
 6. Limpia: apaga el servidor, baja la base y borra las fotos de prueba.
 
-Las pruebas cubren crear una cuenta, ingresar y salir, publicar con fotos, ver cada publicación, los errores de los formularios y que nadie pueda borrar publicaciones de otra persona.
+Las pruebas cubren crear una cuenta, ingresar y salir, publicar con fotos, ver cada publicación, los errores de los formularios y que nadie pueda borrar publicaciones de otra persona. También prueban los pedidos que hace HTMX (mandando el header `HX-Request: true`, como lo hace el navegador).
 
 Para correrlo, la app no tiene que estar levantada (si el puerto 8080 está ocupado, avisa y no hace nada) y **se borran los datos que haya en la base**. El detalle de cada paso está en `scripts/test.sh`.
 
@@ -51,9 +60,10 @@ Para correrlo, la app no tiene que estar levantada (si el puerto 8080 está ocup
 La base arranca sin usuarios ni publicaciones. Con la app levantada (`make run`):
 
 1. Entrar a `http://localhost:8080/` y tocar **Ingresar** → **Crear cuenta**.
-2. Tocar **+ Publicar propiedad**, completar los datos, elegir algunas fotos y publicar.
-3. La publicación aparece en la página principal. Tocándola se abre su página, con las fotos y los datos de contacto.
-4. Con **Cerrar sesión** se ve la página como la vería alguien sin cuenta.
+2. Tocar **+ Publicar propiedad**, completar los datos, elegir algunas fotos y publicar. La publicación aparece en la lista **sin que la página se recargue**, el formulario se cierra vacío y el contador de propiedades se actualiza.
+3. Tocando la publicación se abre su página, con las fotos y los datos de contacto.
+4. En una publicación propia, tocar **Eliminar** y confirmar: la tarjeta desaparece de la lista, también sin recargar.
+5. Con **Cerrar sesión** se ve la página como la vería alguien sin cuenta.
 
 ## Qué se puede hacer
 
@@ -61,7 +71,7 @@ La base arranca sin usuarios ni publicaciones. Con la app levantada (`make run`)
 - **Ver cada publicación** en su propia página, con todas sus fotos, la descripción y los datos para contactar al dueño (email y teléfono).
 - **Crear una cuenta, ingresar y salir.**
 - **Publicar una propiedad** con fotos (hasta 8, de 5 MB como máximo cada una). Para publicar hay que tener la sesión iniciada.
-- **Eliminar** las publicaciones propias. Se borran directamente, junto con sus fotos.
+- **Eliminar** las publicaciones propias, desde la lista (con confirmación y sin recargar) o desde su página. Se borran junto con sus fotos.
 
 ## Cómo está organizado
 
@@ -71,18 +81,42 @@ handlers/        → reciben cada pedido, consultan la base y eligen qué págin
 views/           → las páginas, escritas con templ (.templ)
 static/          → la hoja de estilos y el logo
 db/              → el esquema, las consultas (sqlc) y las ciudades iniciales
+scripts/run.sh   → el script que usa make run
 scripts/test.sh  → el script que usa make test
 requests.hurl    → las pruebas
 uploads/         → las fotos que suben los usuarios (se crea sola)
 ```
 
 Las páginas están divididas en componentes:
-- `layout.templ`: la estructura que comparten todas las páginas (encabezado con el logo y el botón para ingresar o salir).
-- `entity_list.templ`: la lista de publicaciones.
-- `entity_form.templ`: el formulario para publicar.
+- `layout.templ`: la estructura que comparten todas las páginas (encabezado con el logo y el botón para ingresar o salir). Carga HTMX en el `<head>`.
+- `entity_list.templ`: la lista de publicaciones (`#lista-publicaciones`), el contador y el botón para eliminar cada tarjeta.
+- `entity_form.templ`: el formulario para publicar (`#form-publicar`).
 - `index.templ`: la página principal, que junta el formulario y la lista.
 - `publicacion.templ`: la página de cada publicación.
 - `login.templ`: las páginas para ingresar y crear una cuenta.
+
+### HTMX
+
+**Publicar** (`entity_form.templ`). El formulario tiene:
+
+```html
+hx-post="/publicaciones" hx-target="#lista-publicaciones" hx-swap="outerHTML"
+```
+
+El handler de `POST /publicaciones` ya no redirige: guarda la publicación, vuelve a consultar la lista y devuelve:
+1. La lista actualizada, que HTMX pone en lugar de `#lista-publicaciones`.
+2. El formulario vacío con `hx-swap-oob="true"`: HTMX lo usa para reemplazar `#form-publicar`, así queda limpio y cerrado.
+3. El contador "N propiedades".
+
+
+**Eliminar** (`entity_list.templ`). El botón de cada tarjeta propia tiene:
+
+```html
+hx-delete="/publicaciones/{id}" hx-target="closest li" hx-swap="outerHTML swap:400ms" hx-confirm="¿Estás seguro? ..."
+```
+
+El handler de `DELETE /publicaciones/{id}` saca el id de la URL (`r.PathValue("id")`), verifica que la publicación sea del usuario, la borra con `DeletePublicacion` (sqlc) y responde 200 sin contenido para la tarjeta, así que HTMX la reemplaza por nada y desaparece. Si era la última publicación, en cambio, devuelve la lista vacía (con el mensaje "Todavía no hay publicaciones") y los headers `HX-Retarget: #lista-publicaciones` y `HX-Reswap: outerHTML`, para que HTMX reemplace la lista entera y no solo la tarjeta.
+
 
 ### Sesión
 

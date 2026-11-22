@@ -16,7 +16,7 @@ templ IndexPage(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Imagen, ciu
 		<main class="contenido">
 			<div class="encabezado-lista">
 				<h2>Publicaciones</h2>
-				<span class="contador">{ textoContador(len(pubs)) }</span>
+				@Contador(len(pubs))
 			</div>
 			@PublicacionList(pubs, fotos, usuario)
 		</main>

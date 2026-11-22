@@ -3,9 +3,29 @@ package views
 import db "tp5/db/sqlc"
 
 templ PublicacionForm(ciudades []db.Ciudad, form FormPublicacion) {
+	<div id="form-publicar">
+		@formularioPublicar(ciudades, form)
+	</div>
+}
+
+templ PublicacionFormOOB(ciudades []db.Ciudad, form FormPublicacion) {
+	<div id="form-publicar" hx-swap-oob="true">
+		@formularioPublicar(ciudades, form)
+	</div>
+}
+
+templ formularioPublicar(ciudades []db.Ciudad, form FormPublicacion) {
 	<details class="publicar" open?={ form.Error != "" }>
 		<summary class="btn-grande">+ Publicar propiedad</summary>
-		<form method="post" action="/publicaciones" enctype="multipart/form-data" class="formulario panel-publicar">
+		<form
+			method="post"
+			action="/publicaciones"
+			enctype="multipart/form-data"
+			class="formulario panel-publicar"
+			hx-post="/publicaciones"
+			hx-target="#lista-publicaciones"
+			hx-swap="outerHTML"
+		>
 			<h2>Publicar una propiedad</h2>
 			if form.Error != "" {
 				<p class="mensaje error" role="alert">{ form.Error }</p>
@@ -42,6 +62,7 @@ templ PublicacionForm(ciudades []db.Ciudad, form FormPublicacion) {
 				<input type="file" name="imagenes" multiple accept="image/jpeg,image/png,image/webp,image/gif"/>
 			</label>
 			<div class="acciones">
+				<span class="htmx-indicator">Publicando…</span>
 				<button type="submit">Publicar</button>
 			</div>
 		</form>
