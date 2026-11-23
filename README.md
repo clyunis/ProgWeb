@@ -11,8 +11,9 @@ Se debe tener instalado previamente:
 * Docker (con Docker Compose)
 * sqlc (`go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest`)
 * templ (`go install github.com/a-h/templ/cmd/templ@latest`)
-* Hurl
-* make y curl
+* Hurl (https://hurl.dev/docs/installation.html)
+* make (en Ubuntu/Debian: `sudo apt install make`)
+* curl (en Ubuntu/Debian: `sudo apt install curl`)
 
 Además, los puertos **8080** (la app) y **5432** (la base de datos en Docker) tienen que estar libres.
 
