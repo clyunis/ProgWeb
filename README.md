@@ -14,6 +14,8 @@ Se debe tener instalado previamente:
 * Hurl
 * make y curl
 
+Además, los puertos **8080** (la app) y **5432** (la base de datos en Docker) tienen que estar libres.
+
 ## Comandos
 
 Todos se ejecutan desde la raíz del proyecto.
@@ -49,7 +51,7 @@ Hace todo en un solo comando, en este orden:
 5. Corre las pruebas del archivo `requests.hurl`.
 6. Limpia: apaga el servidor, baja la base y borra las fotos de prueba.
 
-Las pruebas cubren crear una cuenta, ingresar y salir, publicar con fotos, ver cada publicación, los errores de los formularios y que nadie pueda borrar publicaciones de otra persona. También prueban los pedidos que hace HTMX (mandando el header `HX-Request: true`, como lo hace el navegador).
+Las pruebas cubren crear una cuenta, ingresar y salir, publicar con fotos, ver cada publicación, pasar las fotos, eliminar publicaciones, los errores de los formularios y que nadie pueda borrar publicaciones de otra persona. También prueban los pedidos que hace HTMX (mandando el header `HX-Request: true`, como lo hace el navegador).
 
 Para correrlo, la app no tiene que estar levantada (si el puerto 8080 está ocupado, avisa y no hace nada) y **se borran los datos que haya en la base**. El detalle de cada paso está en `scripts/test.sh`.
 
