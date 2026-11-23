@@ -10,8 +10,8 @@ import (
 
 	"github.com/lib/pq"
 
-	db "tp5/db/sqlc"
-	"tp5/views"
+	db "tp6/db/sqlc"
+	"tp6/views"
 )
 
 func (h *Handler) Login(w http.ResponseWriter, r *http.Request) {

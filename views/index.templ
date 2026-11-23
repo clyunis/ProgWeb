@@ -1,6 +1,6 @@
 package views
 
-import db "tp5/db/sqlc"
+import db "tp6/db/sqlc"
 
 templ IndexPage(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Imagen, ciudades []db.Ciudad, form FormPublicacion, usuario *Usuario) {
 	@Layout("Encontrá tu lugar", usuario) {

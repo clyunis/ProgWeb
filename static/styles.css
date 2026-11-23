@@ -182,7 +182,7 @@ button:disabled {
     outline: none;
 }
 
-.tarjeta .form-eliminar {
+.tarjeta .btn-eliminar {
     position: relative;
     z-index: 1;
 }

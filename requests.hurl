@@ -16,7 +16,7 @@ header "Content-Type" contains "text/html"
 body contains "TuAlquiler"
 body contains "Todavía no hay publicaciones"
 body contains "Ingresá y publicalo"
-body not contains "action=\"/publicaciones\""
+body not contains "hx-post=\"/publicaciones\""
 body contains "<script src=\"https://unpkg.com/htmx.org@1.9.10\"></script>"
 body contains "id=\"lista-publicaciones\""
 
@@ -89,29 +89,37 @@ GET http://localhost:8080/
 HTTP 200
 [Asserts]
 body contains "Hola, Ana"
-body contains "action=\"/publicaciones\""
+body contains "hx-post=\"/publicaciones\""
 body contains "Tandil, Buenos Aires"
 
 
 # ==========================================================
-# PUBLICAR (formulario con fotos)
+# PUBLICAR CON HTMX (sin recargar la página)
 # ==========================================================
 
-# 1. Falta el título: vuelve a mostrar el formulario con lo que se había escrito
+# 1. Falta el título: devuelve solo el formulario con el mensaje y lo que se
+#    había escrito, y le indica a HTMX que lo ponga en lugar del formulario
+#    (no de la lista)
 POST http://localhost:8080/publicaciones
+HX-Request: true
 [MultipartFormData]
 titulo:
 descripcion: 2 ambientes con balcón
 direccion_calle: Rivadavia
 numero_calle: 1234
 id_ciudad: 1
-HTTP 422
+HTTP 200
 [Asserts]
+header "HX-Retarget" == "#form-publicar"
+header "HX-Reswap" == "outerHTML"
 body contains "Completá todos los campos."
 body contains "value=\"Rivadavia\""
+body not contains "<html"
+body not contains "lista-publicaciones\">"
 
 # 2. Una foto que no es una imagen: no se crea nada
 POST http://localhost:8080/publicaciones
+HX-Request: true
 [MultipartFormData]
 titulo: No debería quedar
 descripcion: x
@@ -119,12 +127,15 @@ direccion_calle: x
 numero_calle: 1
 id_ciudad: 1
 imagenes: file,requests.hurl; image/png
-HTTP 422
+HTTP 200
 [Asserts]
+header "HX-Retarget" == "#form-publicar"
 body contains "no es una imagen válida"
 
-# 3. Publicación correcta con una foto: redirige a la página principal
+# 3. Publicación correcta con dos fotos: sin redirección, devuelve la lista
+#    actualizada, el formulario vacío (out-of-band) y el contador (out-of-band)
 POST http://localhost:8080/publicaciones
+HX-Request: true
 [MultipartFormData]
 titulo: Departamento céntrico
 descripcion: 2 ambientes con balcón
@@ -132,58 +143,33 @@ direccion_calle: Av. San Martin
 numero_calle: 1234
 id_ciudad: 1
 imagenes: file,testdata/foto.png; image/png
-HTTP 303
-[Asserts]
-header "Location" == "/"
-
-# 4. La publicación aparece en la lista (y la que falló no)
-GET http://localhost:8080/
+imagenes: file,testdata/foto.png; image/png
 HTTP 200
 [Captures]
 id_pub: regex /href="\/propiedad\/(\d+)"/
 foto_url: regex /src="(\/uploads\/[0-9a-f]+\.png)"/
 [Asserts]
+header "Location" not exists
+body not contains "<html"
+body contains "<div id=\"lista-publicaciones\">"
 body contains "Departamento céntrico"
 body contains "Publicado por vos"
-body contains "1 propiedad"
 body not contains "No debería quedar"
+body contains "<div id=\"form-publicar\" hx-swap-oob=\"true\">"
+body not contains "value=\"Av. San Martin\""
+body contains "hx-swap-oob=\"true\">1 propiedad</span>"
 
-# 5. La foto subida se puede ver
+# 4. La foto subida se puede ver
 GET http://localhost:8080{{foto_url}}
 HTTP 200
 [Asserts]
 header "Content-Type" == "image/png"
 
-# 6. No se puede listar la carpeta de fotos
+# 5. No se puede listar la carpeta de fotos
 GET http://localhost:8080/uploads/
 HTTP 404
 
-
-# ==========================================================
-# PUBLICAR CON HTMX (sin recargar la página)
-# ==========================================================
-
-# 1. Con un error, devuelve solo el formulario con el mensaje, y le indica a
-#    HTMX que lo ponga en lugar del formulario (no de la lista)
-POST http://localhost:8080/publicaciones
-HX-Request: true
-[MultipartFormData]
-titulo:
-descripcion: Casa con patio
-direccion_calle: Belgrano
-numero_calle: 500
-id_ciudad: 1
-HTTP 200
-[Asserts]
-header "HX-Retarget" == "#form-publicar"
-header "HX-Reswap" == "outerHTML"
-body contains "Completá todos los campos."
-body contains "value=\"Belgrano\""
-body not contains "<html"
-body not contains "lista-publicaciones\">"
-
-# 2. Publicación correcta: sin redirección, devuelve la lista actualizada,
-#    el formulario vacío (out-of-band) y el contador nuevo (out-of-band)
+# 6. Otra publicación: la lista que vuelve trae las dos
 POST http://localhost:8080/publicaciones
 HX-Request: true
 [MultipartFormData]
@@ -197,22 +183,19 @@ HTTP 200
 id_casa: regex /href="\/propiedad\/(\d+)"/
 [Asserts]
 header "Location" not exists
-body not contains "<html"
-body contains "<div id=\"lista-publicaciones\">"
 body contains "Casa con patio"
 body contains "Departamento céntrico"
-body contains "<div id=\"form-publicar\" hx-swap-oob=\"true\">"
-body not contains "value=\"Belgrano\""
-body contains "<span id=\"contador\" class=\"contador\" hx-swap-oob=\"true\">2 propiedades</span>"
+body contains "hx-swap-oob=\"true\">2 propiedades</span>"
 
-# 3. Cada tarjeta propia tiene el botón para eliminarla con HTMX
+# 7. Al recargar la página, están las dos y cada tarjeta propia tiene su
+#    botón de eliminar con los atributos de HTMX
 GET http://localhost:8080/
 HTTP 200
 [Asserts]
-body contains "hx-delete=\"/publicaciones/{{id_casa}}\""
-body contains "hx-target=\"closest li\""
-body contains "hx-confirm=\"¿Estás seguro?"
 body contains "2 propiedades"
+body contains "<button type=\"button\" class=\"btn-eliminar\" hx-delete=\"/publicaciones/{{id_casa}}\" hx-target=\"closest li\""
+body contains "hx-confirm=\"¿Estás seguro?"
+body contains "hx-trigger=\"publicacion-eliminada from:body delay:450ms\""
 
 
 # ==========================================================
@@ -228,7 +211,44 @@ body contains "{{foto_url}}"
 body contains "Esta es tu publicación."
 body contains "/publicaciones/{{id_pub}}/eliminar"
 
-# 2. Publicación que no existe
+# 2. La galería se puede pasar con HTMX: cada flecha y miniatura tiene su hx-get
+GET http://localhost:8080/propiedad/{{id_pub}}
+HTTP 200
+[Asserts]
+body contains "<section id=\"galeria\" class=\"galeria-detalle\" hx-target=\"#galeria\" hx-swap=\"outerHTML\" hx-push-url=\"true\">"
+body contains "hx-get=\"/propiedad/{{id_pub}}?foto=1\""
+body contains "1 / 2"
+
+# 3. Pedido de HTMX a la galería: devuelve solo la galería, con la foto pedida
+GET http://localhost:8080/propiedad/{{id_pub}}?foto=1
+HX-Request: true
+HX-Target: galeria
+HTTP 200
+[Asserts]
+header "Vary" contains "HX-Target"
+body startsWith "<section id=\"galeria\""
+body contains "2 / 2"
+body not contains "<html"
+body not contains "Contactá al dueño"
+
+# 4. La misma URL sin HTMX (recargar o abrir el link) devuelve la página entera
+GET http://localhost:8080/propiedad/{{id_pub}}?foto=1
+HTTP 200
+[Asserts]
+body contains "<html"
+body contains "2 / 2"
+body contains "Contactá al dueño"
+
+# 5. Cuando HTMX restaura el historial (Atrás), también devuelve la página entera
+GET http://localhost:8080/propiedad/{{id_pub}}?foto=1
+HX-Request: true
+HX-History-Restore-Request: true
+HTTP 200
+[Asserts]
+body contains "<html"
+body contains "Contactá al dueño"
+
+# 6. Publicación que no existe
 GET http://localhost:8080/propiedad/999999
 HTTP 404
 [Asserts]
@@ -334,13 +354,22 @@ HTTP 303
 header "Location" == "/"
 cookie "token" exists
 
-# 2. Eliminar con HTMX (DELETE): responde 200 sin nada para poner en lugar
-#    de la tarjeta (así desaparece); solo viaja el contador, out-of-band
+# 2. Eliminar con HTMX (DELETE): responde 200 vacío, así HTMX reemplaza la
+#    tarjeta por nada y desaparece. El header avisa al contador
 DELETE http://localhost:8080/publicaciones/{{id_casa}}
 HX-Request: true
 HTTP 200
 [Asserts]
-body == "<span id=\"contador\" class=\"contador\" hx-swap-oob=\"true\">1 propiedad</span>"
+header "HX-Trigger" == "publicacion-eliminada"
+body == ""
+
+# 2b. El contador, al escuchar el evento, pide el número nuevo
+GET http://localhost:8080/publicaciones/contador
+HX-Request: true
+HTTP 200
+[Asserts]
+body contains ">1 propiedad</span>"
+body not contains "lista-publicaciones"
 
 # 3. Ya no existe
 GET http://localhost:8080/propiedad/{{id_casa}}
@@ -389,17 +418,23 @@ id_mono: regex /href="\/propiedad\/(\d+)"/
 [Asserts]
 body contains "1 propiedad<"
 
-# 11. Al eliminar la última con HTMX, reemplaza la lista entera por el mensaje de lista vacía
+# 11. Eliminar la última con HTMX también responde vacío
 DELETE http://localhost:8080/publicaciones/{{id_mono}}
 HX-Request: true
 HTTP 200
 [Asserts]
-header "HX-Retarget" == "#lista-publicaciones"
-header "HX-Reswap" == "outerHTML"
-body contains "<div id=\"lista-publicaciones\">"
+header "HX-Trigger" == "publicacion-eliminada"
+body == ""
+
+# 11b. El contador vuelve en 0 y trae la lista vacía (out-of-band) con el mensaje
+GET http://localhost:8080/publicaciones/contador
+HX-Request: true
+HTTP 200
+[Asserts]
+body contains ">0 propiedades</span>"
+body contains "<div id=\"lista-publicaciones\" hx-swap-oob=\"true\">"
 body contains "Todavía no hay publicaciones"
 body not contains "<li"
-body contains "<span id=\"contador\" class=\"contador\" hx-swap-oob=\"true\">0 propiedades</span>"
 
 # 12. La lista quedó vacía
 GET http://localhost:8080/

@@ -18,7 +18,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 URL="http://localhost:8080"
-BINARIO="tmp/tp5"
+BINARIO="tmp/tp6"
 LOG="tmp/server.log"
 ESPERA_BASE=60     # segundos máximos para que Postgres esté listo
 ESPERA_SERVIDOR=20 # segundos máximos para que el servidor responda

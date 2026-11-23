@@ -1,6 +1,6 @@
 package views
 
-import db "tp5/db/sqlc"
+import db "tp6/db/sqlc"
 
 templ PublicacionList(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Imagen, usuario *Usuario) {
 	<div id="lista-publicaciones">
@@ -16,12 +16,31 @@ templ PublicacionList(pubs []db.ListPublicacionesRow, fotos map[int32][]db.Image
 	</div>
 }
 
+templ PublicacionListVaciaOOB() {
+	<div id="lista-publicaciones" hx-swap-oob="true">
+		<p class="vacio">Todavía no hay publicaciones. ¡Sé la primera persona en publicar!</p>
+	</div>
+}
+
 templ Contador(n int) {
-	<span id="contador" class="contador">{ textoContador(n) }</span>
+	<span
+		id="contador"
+		class="contador"
+		hx-get="/publicaciones/contador"
+		hx-trigger="publicacion-eliminada from:body delay:450ms"
+		hx-swap="outerHTML"
+	>{ textoContador(n) }</span>
 }
 
 templ ContadorOOB(n int) {
-	<span id="contador" class="contador" hx-swap-oob="true">{ textoContador(n) }</span>
+	<span
+		id="contador"
+		class="contador"
+		hx-get="/publicaciones/contador"
+		hx-trigger="publicacion-eliminada from:body delay:450ms"
+		hx-swap="outerHTML"
+		hx-swap-oob="true"
+	>{ textoContador(n) }</span>
 }
 
 templ tarjeta(pub db.ListPublicacionesRow, fotos []db.Imagen, usuario *Usuario) {
@@ -56,17 +75,14 @@ templ tarjeta(pub db.ListPublicacionesRow, fotos []db.Imagen, usuario *Usuario) 
 }
 
 templ BotonEliminarTarjeta(id int32) {
-	<form
-		method="post"
-		action={ templ.URL(urlEliminar(id)) }
-		class="form-eliminar"
+	<button
+		type="button"
+		class="btn-eliminar"
 		hx-delete={ urlPublicacion(id) }
 		hx-target="closest li"
 		hx-swap="outerHTML swap:400ms"
 		hx-confirm="¿Estás seguro? La publicación se va a eliminar junto con sus fotos."
-	>
-		<button type="submit" class="btn-eliminar">Eliminar</button>
-	</form>
+	>Eliminar</button>
 }
 
 templ BotonEliminar(id int32) {

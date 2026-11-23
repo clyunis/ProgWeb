@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	"tp5/views"
+	"tp6/views"
 )
 
 func (h *Handler) Propiedad(w http.ResponseWriter, r *http.Request) {
@@ -41,15 +41,22 @@ func (h *Handler) Propiedad(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Error al consultar la base de datos", http.StatusInternalServerError)
 		return
 	}
+	actual, err := strconv.Atoi(r.URL.Query().Get("foto"))
+	if err != nil || actual < 0 || actual >= len(fotos) {
+		actual = 0
+	}
+
+	w.Header().Set("Vary", "HX-Request, HX-Target")
+
+	if esHTMX(r) && r.Header.Get("HX-Target") == "galeria" && r.Header.Get("HX-History-Restore-Request") != "true" {
+		render(w, r, http.StatusOK, views.Galeria(pub, fotos, actual))
+		return
+	}
+
 	contacto, err := h.queries.GetContactoPublicacion(ctx, int32(id))
 	if err != nil {
 		http.Error(w, "Error al consultar la base de datos", http.StatusInternalServerError)
 		return
-	}
-
-	actual, err := strconv.Atoi(r.URL.Query().Get("foto"))
-	if err != nil || actual < 0 || actual >= len(fotos) {
-		actual = 0
 	}
 
 	render(w, r, http.StatusOK, views.PublicacionPage(pub, fotos, actual, contacto, usuario))

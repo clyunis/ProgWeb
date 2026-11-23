@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	db "tp5/db/sqlc"
+	db "tp6/db/sqlc"
 )
 
 type Handler struct {

@@ -1,4 +1,4 @@
-APP_NAME := tp5
+APP_NAME := tp6
 
 .PHONY: generate build db-up db-down run test hurl clean
 

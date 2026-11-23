@@ -59,7 +59,7 @@ La base arranca sin usuarios ni publicaciones. Con la app levantada (`make run`)
 
 1. Entrar a `http://localhost:8080/` y tocar **Ingresar** → **Crear cuenta**.
 2. Tocar **+ Publicar propiedad**, completar los datos, elegir algunas fotos y publicar. La publicación aparece en la lista **sin que la página se recargue**, el formulario se cierra vacío y el contador de propiedades se actualiza.
-3. Tocando la publicación se abre su página, con las fotos y los datos de contacto.
+3. Tocando la publicación se abre su página, con las fotos y los datos de contacto. Las fotos se pasan con las flechas o las miniaturas, también sin recargar.
 4. En una publicación propia, tocar **Eliminar** y confirmar: la tarjeta desaparece de la lista, también sin recargar.
 5. Con **Cerrar sesión** se ve la página como la vería alguien sin cuenta.
 
@@ -95,25 +95,11 @@ Las páginas están divididas en componentes:
 
 ### HTMX
 
-**Publicar** (`entity_form.templ`). El formulario tiene:
+Con HTMX, estas acciones actualizan solo una parte de la página, sin recargarla:
 
-```html
-hx-post="/publicaciones" hx-target="#lista-publicaciones" hx-swap="outerHTML"
-```
-
-El handler de `POST /publicaciones` ya no redirige: guarda la publicación, vuelve a consultar la lista y devuelve:
-1. La lista actualizada, que HTMX pone en lugar de `#lista-publicaciones`.
-2. El formulario vacío con `hx-swap-oob="true"`: HTMX lo usa para reemplazar `#form-publicar`, así queda limpio y cerrado.
-3. El contador "N propiedades".
-
-
-**Eliminar** (`entity_list.templ`). El botón de cada tarjeta propia tiene:
-
-```html
-hx-delete="/publicaciones/{id}" hx-target="closest li" hx-swap="outerHTML swap:400ms" hx-confirm="¿Estás seguro? ..."
-```
-
-El handler de `DELETE /publicaciones/{id}` saca el id de la URL (`r.PathValue("id")`), verifica que la publicación sea del usuario, la borra con `DeletePublicacion` (sqlc) y responde 200 sin contenido para la tarjeta, así que HTMX la reemplaza por nada y desaparece. Si era la última publicación, en cambio, devuelve la lista vacía (con el mensaje "Todavía no hay publicaciones") y los headers `HX-Retarget: #lista-publicaciones` y `HX-Reswap: outerHTML`, para que HTMX reemplace la lista entera y no solo la tarjeta.
+- **Publicar:** la publicación nueva aparece en la lista, el formulario se vacía y se cierra, y se actualiza el contador. Si falta algún dato, el error aparece en el formulario.
+- **Eliminar desde la lista:** después de confirmar, la tarjeta desaparece y se actualiza el contador.
+- **Pasar las fotos** de una publicación: cambia solo la galería. La dirección de la página se actualiza, así que el botón Atrás y recargar funcionan igual.
 
 
 ### Sesión

@@ -14,7 +14,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	db "tp5/db/sqlc"
+	db "tp6/db/sqlc"
 )
 
 const (

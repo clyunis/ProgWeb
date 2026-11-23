@@ -1,6 +1,6 @@
 package views
 
-import db "tp5/db/sqlc"
+import db "tp6/db/sqlc"
 
 templ PublicacionForm(ciudades []db.Ciudad, form FormPublicacion) {
 	<div id="form-publicar">
@@ -18,8 +18,6 @@ templ formularioPublicar(ciudades []db.Ciudad, form FormPublicacion) {
 	<details class="publicar" open?={ form.Error != "" }>
 		<summary class="btn-grande">+ Publicar propiedad</summary>
 		<form
-			method="post"
-			action="/publicaciones"
 			enctype="multipart/form-data"
 			class="formulario panel-publicar"
 			hx-post="/publicaciones"

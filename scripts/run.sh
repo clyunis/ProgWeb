@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 URL="http://localhost:8080"
-BINARIO="tmp/tp5"
+BINARIO="tmp/tp6"
 ESPERA_BASE=60
 
 PID_SERVIDOR=""

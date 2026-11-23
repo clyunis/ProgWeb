@@ -5,8 +5,8 @@ import (
 	"log"
 	"net/http"
 
-	db "tp5/db/sqlc"
-	"tp5/handlers"
+	db "tp6/db/sqlc"
+	"tp6/handlers"
 
 	_ "github.com/lib/pq"
 )
@@ -35,6 +35,7 @@ func main() {
 	http.HandleFunc("/publicaciones", h.Publicaciones)
 	http.HandleFunc("/publicaciones/", h.Publicaciones)
 	http.HandleFunc("DELETE /publicaciones/{id}", h.EliminarPublicacion)
+	http.HandleFunc("GET /publicaciones/contador", h.Contador)
 	http.HandleFunc("/propiedad/", h.Propiedad)
 
 	http.HandleFunc("/login", h.Login)

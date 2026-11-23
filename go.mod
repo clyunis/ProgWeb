@@ -1,4 +1,4 @@
-module tp5
+module tp6
 
 go 1.26.0
 

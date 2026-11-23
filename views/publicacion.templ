@@ -1,6 +1,6 @@
 package views
 
-import db "tp5/db/sqlc"
+import db "tp6/db/sqlc"
 
 templ PublicacionPage(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int, contacto db.GetContactoPublicacionRow, usuario *Usuario) {
 	@Layout(pub.Titulo, usuario) {
@@ -13,7 +13,7 @@ templ PublicacionPage(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual
 			</header>
 			<div class="layout-detalle">
 				<div class="columna-principal">
-					@galeria(pub, fotos, actual)
+					@Galeria(pub, fotos, actual)
 					<section class="bloque">
 						<h2>Descripción</h2>
 						<p class="texto-largo">{ pub.Descripcion }</p>
@@ -36,8 +36,14 @@ templ PublicacionPage(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual
 	}
 }
 
-templ galeria(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int) {
-	<section class="galeria-detalle">
+templ Galeria(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int) {
+	<section
+		id="galeria"
+		class="galeria-detalle"
+		hx-target="#galeria"
+		hx-swap="outerHTML"
+		hx-push-url="true"
+	>
 		if len(fotos) == 0 {
 			<div class="sin-foto">Esta publicación no tiene fotos</div>
 		} else {
@@ -46,8 +52,18 @@ templ galeria(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int) {
 					<img class="foto-principal" src={ fotos[actual].Url } alt={ pub.Titulo }/>
 				</a>
 				if len(fotos) > 1 {
-					<a class="flecha anterior" href={ templ.URL(urlFoto(pub.IDAlquiler, actual-1, len(fotos))) } aria-label="Foto anterior">‹</a>
-					<a class="flecha siguiente" href={ templ.URL(urlFoto(pub.IDAlquiler, actual+1, len(fotos))) } aria-label="Foto siguiente">›</a>
+					<a
+						class="flecha anterior"
+						href={ templ.URL(urlFoto(pub.IDAlquiler, actual-1, len(fotos))) }
+						hx-get={ urlFoto(pub.IDAlquiler, actual-1, len(fotos)) }
+						aria-label="Foto anterior"
+					>‹</a>
+					<a
+						class="flecha siguiente"
+						href={ templ.URL(urlFoto(pub.IDAlquiler, actual+1, len(fotos))) }
+						hx-get={ urlFoto(pub.IDAlquiler, actual+1, len(fotos)) }
+						aria-label="Foto siguiente"
+					>›</a>
 					<span class="contador-fotos">{ textoFoto(actual, len(fotos)) }</span>
 				}
 			</div>
@@ -57,6 +73,7 @@ templ galeria(pub db.GetPublicacionDetalleRow, fotos []db.Imagen, actual int) {
 						<a
 							class={ "miniatura", templ.KV("activa", i == actual) }
 							href={ templ.URL(urlFoto(pub.IDAlquiler, i, len(fotos))) }
+							hx-get={ urlFoto(pub.IDAlquiler, i, len(fotos)) }
 							aria-label={ "Ver foto " + textoFoto(i, len(fotos)) }
 						>
 							<img src={ foto.Url } alt=""/>

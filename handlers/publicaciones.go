@@ -11,8 +11,8 @@ import (
 
 	"github.com/a-h/templ"
 
-	db "tp5/db/sqlc"
-	"tp5/views"
+	db "tp6/db/sqlc"
+	"tp6/views"
 )
 
 func render(w http.ResponseWriter, r *http.Request, status int, c templ.Component) {
@@ -74,10 +74,7 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Método no permitido", http.StatusMethodNotAllowed)
 		return
 	}
-	h.renderIndex(w, r, h.usuarioActual(r), views.FormPublicacion{}, http.StatusOK)
-}
-
-func (h *Handler) renderIndex(w http.ResponseWriter, r *http.Request, usuario *views.Usuario, form views.FormPublicacion, status int) {
+	usuario := h.usuarioActual(r)
 	ctx := r.Context()
 	pubs, fotos, err := h.cargarPublicaciones(ctx)
 	if err != nil {
@@ -94,7 +91,7 @@ func (h *Handler) renderIndex(w http.ResponseWriter, r *http.Request, usuario *v
 		}
 	}
 
-	render(w, r, status, views.IndexPage(pubs, fotos, ciudades, form, usuario))
+	render(w, r, http.StatusOK, views.IndexPage(pubs, fotos, ciudades, views.FormPublicacion{}, usuario))
 }
 
 func (h *Handler) Publicaciones(w http.ResponseWriter, r *http.Request) {
@@ -187,8 +184,7 @@ func (h *Handler) EliminarPublicacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := r.Context()
-	switch err := h.borrarPublicacion(ctx, usuario, int32(id)); {
+	switch err := h.borrarPublicacion(r.Context(), usuario, int32(id)); {
 	case errors.Is(err, errNoEncontrada):
 		http.Error(w, err.Error(), http.StatusNotFound)
 		return
@@ -201,22 +197,25 @@ func (h *Handler) EliminarPublicacion(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	cantidad, err := h.queries.CountPublicaciones(ctx)
+	w.Header().Set("HX-Trigger", "publicacion-eliminada")
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *Handler) Contador(w http.ResponseWriter, r *http.Request) {
+	cantidad, err := h.queries.CountPublicaciones(r.Context())
 	if err != nil {
 		log.Println("Error al contar publicaciones:", err)
-		w.WriteHeader(http.StatusOK)
+		http.Error(w, "Error al consultar la base de datos", http.StatusInternalServerError)
 		return
 	}
 	if cantidad == 0 {
-		w.Header().Set("HX-Retarget", "#lista-publicaciones")
-		w.Header().Set("HX-Reswap", "outerHTML")
 		render(w, r, http.StatusOK, templ.Join(
-			views.PublicacionList(nil, nil, usuario),
-			views.ContadorOOB(0),
+			views.Contador(0),
+			views.PublicacionListVaciaOOB(),
 		))
 		return
 	}
-	render(w, r, http.StatusOK, views.ContadorOOB(int(cantidad)))
+	render(w, r, http.StatusOK, views.Contador(int(cantidad)))
 }
 
 func (h *Handler) crearPublicacion(w http.ResponseWriter, r *http.Request) {
@@ -232,7 +231,7 @@ func (h *Handler) crearPublicacion(w http.ResponseWriter, r *http.Request) {
 		var errTamanio *http.MaxBytesError
 		if errors.As(err, &errTamanio) {
 			form := views.FormPublicacion{Error: "Las fotos superan el tamaño máximo permitido."}
-			h.errorFormulario(w, r, usuario, form, http.StatusRequestEntityTooLarge)
+			h.errorFormulario(w, r, form)
 			return
 		}
 		http.Error(w, "Formulario inválido", http.StatusBadRequest)
@@ -259,7 +258,7 @@ func (h *Handler) crearPublicacion(w http.ResponseWriter, r *http.Request) {
 		form.Error = "Podés subir hasta 8 fotos."
 	}
 	if form.Error != "" {
-		h.errorFormulario(w, r, usuario, form, http.StatusUnprocessableEntity)
+		h.errorFormulario(w, r, form)
 		return
 	}
 
@@ -282,14 +281,9 @@ func (h *Handler) crearPublicacion(w http.ResponseWriter, r *http.Request) {
 
 			h.queries.DeletePublicacion(ctx, id)
 			form.Error = "No se pudieron guardar las fotos: " + err.Error()
-			h.errorFormulario(w, r, usuario, form, http.StatusUnprocessableEntity)
+			h.errorFormulario(w, r, form)
 			return
 		}
-	}
-
-	if !esHTMX(r) {
-		http.Redirect(w, r, "/", http.StatusSeeOther)
-		return
 	}
 
 	pubs, fotos, err := h.cargarPublicaciones(ctx)
@@ -309,11 +303,7 @@ func (h *Handler) crearPublicacion(w http.ResponseWriter, r *http.Request) {
 	))
 }
 
-func (h *Handler) errorFormulario(w http.ResponseWriter, r *http.Request, usuario *views.Usuario, form views.FormPublicacion, status int) {
-	if !esHTMX(r) {
-		h.renderIndex(w, r, usuario, form, status)
-		return
-	}
+func (h *Handler) errorFormulario(w http.ResponseWriter, r *http.Request, form views.FormPublicacion) {
 	ciudades, err := h.queries.ListCiudades(r.Context())
 	if err != nil {
 		http.Error(w, "Error al consultar la base de datos", http.StatusInternalServerError)
