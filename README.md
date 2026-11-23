@@ -2,8 +2,6 @@
 
 **TuAlquiler** es una app de alquileres: cualquiera puede ver las propiedades publicadas, y quien tiene una cuenta puede publicar las suyas con fotos.
 
-En este TP la app del TP5 pasa a usar **HTMX**: publicar y eliminar ya no recargan la página, sino que el servidor devuelve solo los fragmentos de HTML que cambian y HTMX los reemplaza en su lugar. Todo sin escribir JavaScript.
-
 Integrantes: Valentin Tonelotto y Clara Yunis
 
 ## Requisitos
@@ -38,7 +36,7 @@ Hace el ciclo completo en un solo comando, en este orden:
 5. Arranca el servidor. La terminal queda ocupada mientras está corriendo.
 6. Al detenerlo con Ctrl+C, o si el servidor o algún paso anterior falla, limpia siempre: apaga el servidor, baja la base y borra las fotos.
 
-Después del paso 5 hay que abrir `http://localhost:8080/` en el navegador. No hace falta correr `make db-down` al terminar. Como la base arranca vacía en cada ejecución, **los datos no se conservan entre un `make run` y el siguiente**. El detalle de cada paso está en `scripts/run.sh`.
+Después del paso 5 hay que abrir `http://localhost:8080/` en el navegador. No hace falta correr `make db-down` al terminar.
 
 ### `make test`: correr las pruebas
 
